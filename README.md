@@ -20,10 +20,10 @@ Running
 =======
 3 simple steps! No building required!
 
-1. `git clone https://github.com/lucastan/uva-node.git` (recommended) 
+1.  Install node.js if you haven't: http://nodejs.org
+2. `git clone https://github.com/lucastan/uva-node.git` (recommended) 
     or download the source.
-2.  Install node.js if you haven't: http://nodejs.org
-3.  `node uva-node/index.js`
+3.  `node uva-node`
 
 The program will generate a settings file and a random key the first 
 time it is run, and will use the key to encrypt all your account passwords.
