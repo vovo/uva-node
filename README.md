@@ -20,9 +20,9 @@ Running
 =======
 3 simple steps! No building required!
 
-1. `git clone https://github.com/lucastan/uva-node.git` or download the 
-    source.
-2.  Install node.js http://nodejs.org
+1. `git clone https://github.com/lucastan/uva-node.git` (recommended) 
+    or download the source.
+2.  Install node.js if you haven't: http://nodejs.org
 3.  `node uva-node/index.js`
 
 The program will generate a settings file and a random key the first 
@@ -30,9 +30,10 @@ time it is run, and will use the key to encrypt all your account passwords.
 The key is stored at `~/.ssh/uva-node.key`. You don't have to generate 
 an SSH key nor will the program use your SSH key.
 
+To upgrade to the latest version, simply do `git pull` in the uva-node dir!
+
 There is an older version (uva-cli) written in Java at uva-cli.git, 
 but only this node.js version will be actively maintained. 
-
 
 Usage
 =====
