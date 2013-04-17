@@ -3,10 +3,84 @@ const qs = require('querystring');
 const crypto = require('crypto');
 const fs = require('fs');
 
+const ATTRIB_PATTERN =
+    // group 1: attrib name (allowing namespace)
+    // group 2: value including quote chars if any
+    /([\w:]+)\s*=\s*("[^"]*"|'[^']*'|\S*)/gi;
+
+    
 (function(obj){
 
 obj.trim = function(s){
     return s.replace(/^\s+|\s+$/g, '');
+};
+
+/**
+ * Removes surrounding quote chars (" or ') from a string.
+ * Any whitespace surrounded by the quote chars are preserved but 
+ * whitespaces outside of the quote chars are removed. If no quote chars
+ * are present the entire string is trimmed of whitespaces.
+ * The string is processed adhering to the following rules:
+ * - the starting and ending quote chars must be the same.
+ * - if the starting or ending quote char is present, the other must also
+ *    be present, that is, there must be no unmatched quote char.
+ * <pre>
+ * Examples: 
+ * String s = "  ' hello '  "; // unquote(s) returns "' hello '"
+ * String s = "  'hello   ";   // unquote(s) will throw an exception
+ * String s = " hello ";       // unquote(s) returns "hello"
+ * </pre> 
+ * @param s
+ * @exception if at least one 
+ * of the rules is violated. 
+ */
+obj.unquote = function(s){
+    s = obj.trim(s);
+    
+    if (s.length >= 2)
+    {
+        var start = s.charAt(0);
+        var end = s.charAt(s.length-1);
+        
+        var isQuote = 
+           (start == '"' || start == '\'' ||
+            end   == '"' || end   == '\'');
+            
+        if (isQuote)
+        {
+            if (start != end)
+                throw ("different quote chars");
+        
+            return s.substring(1, s.length-1);
+        }
+    }
+    else if (s.length >= 1)
+    {
+        var start = s.charAt(0);
+
+        if (start == '"' || start == '\'')
+            throw ("unmatched starting quote");
+    }
+
+    return s;
+};
+
+/**
+ * Parses an HTML fragment containing attribute pairs without the
+ * tag name, in to a map.
+ * This is a forgiving parser that does not adhere strictly to XML rules,
+ * but well-formed XML are guaranteed to be parsed correctly.
+ * @param html This must be in the format: attrib1="value" attrib2="value"
+ * @return Map of attrib-value pairs. The names and values are NOT HTML
+ * decoded.
+ */
+obj.parseAttribs = function(html){
+    var match, pairs = {};
+    while (match = ATTRIB_PATTERN.exec(html))
+    {
+        pairs[match[1]] = obj.unquote(match[2]);
+    }
+    return pairs;
 };
 
 obj.getUserHomePath = function () {
@@ -38,13 +112,13 @@ obj.createReq = function(method, host, path, callback){
         // typical headers to disguise our identity
         headers: {
             'Referer': 'http://'+host+path,
-            'Accept-Charset': 'ISO-8859-1,utf-8',
+            'Accept-Charset': 'utf-8,ISO-8859-1',
 
             // Use chunked so we don't have to send content-length
             'Transfer-Encoding': 'chunked',
             
             // no gzip :(
-            //conn.setRequestProperty("Accept-Encoding", "gzip,deflate");
+            //'Accept-Encoding': 'gzip,deflate',
         
             'Accept-Language': 'en-US,en;q=0.8',
             'User-Agent' :  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) "+
