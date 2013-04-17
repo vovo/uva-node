@@ -5,7 +5,7 @@ const util = require('./util');
 const Account = require('./account');
 const Adapter = require('./adapter');
 
-const SETTING_FILE_NAME = ".uva-cli";
+const SETTING_FILE_NAME = ".uva-node";
 const SETTING_PATH = path.join(util.getUserHomePath(), SETTING_FILE_NAME);
 
 function load(filePath)

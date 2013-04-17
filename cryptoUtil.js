@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const util = require('./util');
 
-const KEY_FILE_NAME = "uva-cli.key";
+const KEY_FILE_NAME = "uva-node.key";
 const SSH_PATH = path.join(util.getUserHomePath(), ".ssh");
 const KEY_PATH = path.join(SSH_PATH, KEY_FILE_NAME);
 
