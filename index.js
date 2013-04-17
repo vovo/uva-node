@@ -44,7 +44,7 @@ if (!settings)
 rl = readline.createInterface(process.stdin, process.stdout);
 
 rl.on('line', function(line) {
-    var toks = line.split(/\s+/g);
+    var toks = line.trim().split(/\s+/g);
     var action = toks[0].toLowerCase();
 
     switch(action) 
