@@ -9,9 +9,10 @@ module.exports = (function(){
         var user = data.user;
         var passIv = data.passIv;
         
-        // might be encrypted
+        // if pass is encrypted, it will be decrypted later on
         var pass = data.pass;
 
+        // Object that stores encrypted password, to be stringified
         var obj = {
             type: type,
             user: user,
@@ -26,6 +27,12 @@ module.exports = (function(){
                         new Buffer(pass, 'hex'), 
                         new Buffer(passIv, 'hex'));
             pass = buf.toString('utf8');
+        }
+        else
+        {
+            var r = cryptoUtil.encrypt(new Buffer(pass, 'utf8'));
+            obj.pass = r.buf.toString('hex');
+            obj.passIv = passIv = r.iv.toString('hex');
         }
 
         /**
