@@ -43,9 +43,7 @@ function getKey()
     if (!keyExists) return createKey();
 
     var contents = fs.readFileSync(KEY_PATH, {encoding: 'ascii'});
-    
-    contents = util.trim(contents);
-    return new Buffer(contents, 'hex');
+    return new Buffer(contents.trim(), 'hex');
 }
 
 const KEY_BUF = getKey();

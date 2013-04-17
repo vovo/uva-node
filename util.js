@@ -11,10 +11,6 @@ const ATTRIB_PATTERN =
     
 (function(obj){
 
-obj.trim = function(s){
-    return s.replace(/^\s+|\s+$/g, '');
-};
-
 /**
  * Removes surrounding quote chars (" or ') from a string.
  * Any whitespace surrounded by the quote chars are preserved but 
@@ -35,7 +31,7 @@ obj.trim = function(s){
  * of the rules is violated. 
  */
 obj.unquote = function(s){
-    s = obj.trim(s);
+    s = s.trim();
     
     if (s.length >= 2)
     {
@@ -206,8 +202,8 @@ obj.getCookies = function(inMsg){
             var pair = tokens[0].split("=");
             if (pair.length != 2) return null;
 
-            var key = obj.trim(pair[0]);
-            var value = obj.trim(pair[1]);
+            var key = pair[0].trim();
+            var value = pair[1].trim();
 
             return {key: key, value: value};
         }
