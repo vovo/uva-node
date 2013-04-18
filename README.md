@@ -50,23 +50,26 @@ add
 ----
 Syntax: add {type} {username} {password}
 
-Adds a user account.
+Adds a new user account, or replace an existing one 
+with the same type and username. The replacing behavior is useful for updating
+password.
+
 All accounts will be preserved even after you quit the program.
 
 Currently uva is the only supported type.
 
 remove
 ------
-Syntax: remove {username}
+Syntax: remove {type} {username}
 
-Removes a user account
+Removes a user account. You cannot remove an account that is set as current.
 
 use
 ---
-Syntax: use {username}
+Syntax: use {type} {username} OR use
 
 Sets a user account as current.
-If {username} is omitted, sets the current account to none.
+If both {type} and {username} are omitted, sets the current account to none.
 The current account setting will be preserved even after you quit the program.
 
 show
@@ -77,9 +80,10 @@ Shows all user accounts
 
 send
 ----
-Syntax: send {problem-id} {fileName}
+Syntax: send {problem #} {fileName}
 
-Sends a code file. {fileName} is relative to the current directory, which
+Sends a code file using the current account. 
+{fileName} is relative to the current directory, which
 is where you ran the `node ...` command to start uva-node
 
 The program will auto-detect the language using the file name extension:
@@ -88,11 +92,11 @@ The program will auto-detect the language using the file name extension:
 - .c     : C
 - .pascal / .pas / .p : Pascal 
 
-status
-------
+status / stat
+-------------
 Syntax: status
 
-Prints out the latest ten submissions.
+Prints out the latest ten submissions for the current account.
 
 quit / exit
 -----------
@@ -104,7 +108,7 @@ Example usage
 > add uva john_doe 12345
 Account added
 
-> use john_doe
+> use uva john_doe
 
 > send 123 code.cpp
 Logging in...
