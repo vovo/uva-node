@@ -140,7 +140,6 @@ obj.createReq = function(method, host, path, callback){
 
 obj.writePostData = function(httpReq, data){
     var qstr = qs.stringify(data);
-    //httpReq.setHeader('Content-Length', Buffer.byteLength(qstr, 'utf8'));
     httpReq.setHeader('Content-Type',
             "application/x-www-form-urlencoded; charset=UTF-8"); 
     httpReq.end(qstr, 'utf8');
@@ -153,6 +152,9 @@ obj.writeFormData = function(httpReq, data){
     httpReq.setHeader('Content-Type', 
         'multipart/form-data; boundary='+boundStr);
 
+    var bufCap = 1<<16;
+    var buf = new Buffer(bufCap);
+    
     for (var key in data)
     {
         var val = data[key];
@@ -168,8 +170,6 @@ obj.writeFormData = function(httpReq, data){
 
             var fd = fs.openSync(val.filePath, 'r');
             var bufSize = 0;
-            var bufCap = 1<<16
-            var buf = new Buffer(bufCap);
 
             while(true)
             {
@@ -192,6 +192,7 @@ obj.writeFormData = function(httpReq, data){
                 break;
             }
 
+            fs.closeSync(fd);
             httpReq.write("\r\n", 'ascii');
         }
         else
