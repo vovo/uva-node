@@ -7,7 +7,7 @@ module.exports = (function(){
     {
         // private instance fields
         var type = Adapter.normalizeType(data.type);
-        var typeLower = type.toLowerCase();
+        var typeLower = data.type.toLowerCase();
         var user = data.user;
         var passIv = data.passIv;
         

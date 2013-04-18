@@ -111,8 +111,10 @@ module.exports = (function(parentCls){
 
         this._send = function(probNum, filePath, lang, callback){
             var callback10 = util.createEndCallback(function(html){
-                console.log(html);
-                callback(null);
+                if (html.match(/not\s+authorised/gi))
+                    callback({message: 'cannot login. password correct?'});
+                else
+                    callback(null);
             });
 
             var langVal;

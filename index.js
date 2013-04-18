@@ -130,17 +130,18 @@ rl.on('line', function(line) {
     case 'add':
         if (! checkToks(3, 'add <type> <userName> <password>')) break;
         
-        var acct = new Account({type: toks[1], user: toks[2], pass: toks[3]});
-        var adap = Adapter.create(app, acct);
-        if (!adap)
+        var normType = Adapter.normalizeType(toks[1]);
+        if (!normType)
         {
             console.log('invalid type');
             break;
         }
 
-        var replaced = app.add(acct);
-        if (replaced)
-            console.log('Account replaced an existing one');
+        var acct = new Account({type: toks[1], user: toks[2], pass: toks[3]});
+
+        var ok = app.add(acct);
+        if (!ok)
+            console.log('Error: trying to replace current account with new one');
         else
             console.log('Account added successfully');
         

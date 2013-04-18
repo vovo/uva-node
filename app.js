@@ -87,18 +87,23 @@ module.exports = (function(){
 
         /**
          * Adds a new account, or replaces an existing one.
-         * @return boolean true if acct replaced an existing one.
+         * @return boolean true if acct is added ok.
          */
         this.add = function(acct){
             var idx = findAcct(acct.type(), acct.user());
             if (idx >= 0)
             {
                 accts[idx] = acct;
+                if (curAcct && curAcct.match(acct.type(), acct.user()))
+                {
+                    curAcct = acct;
+                    curAdap = Adapter.create(this, acct);
+                }
                 return true;
             }
 
             accts.push(acct);
-            return false;
+            return true;
         };
 
         /**
@@ -112,7 +117,7 @@ module.exports = (function(){
             var idx = findAcct(type, user);
             if (idx < 0) return false;
 
-            accts = Array.splice(accts, idx, 1);
+            accts.splice(idx, 1);
             return true;
         };
 
