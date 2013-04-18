@@ -11,6 +11,17 @@ const ATTRIB_PATTERN =
     
 (function(obj){
 
+obj.createEndCallback = function(callback){
+    return new (function(){
+        var buf = '';
+        return function(inMsg){
+            inMsg.setEncoding('utf8');
+            inMsg.on('readable', function(){buf += inMsg.read() || '';})
+                 .on('end', function(){callback(buf, inMsg)});
+        }
+    })();
+};
+
 /**
  * Removes surrounding quote chars (" or ') from a string.
  * Any whitespace surrounded by the quote chars are preserved but 
@@ -154,15 +165,32 @@ obj.writeFormData = function(httpReq, data){
                 "\"; filename=\""+val.filePath+"\"\r\n"+
                 "Content-Type: application/octet-stream\r\n"+
                 "Content-Transfer-Encoding: binary\r\n\r\n", "utf8");
-                
-            fs.createReadStream(val.filePath,
-                    { flags: 'r',
-                      encoding: null,
-                      fd: null,
-                      mode: 0666,
-                      bufferSize: 64 * 1024,
-                      autoClose: true
-                    }).pipe(httpReq, {end: false});
+
+            var fd = fs.openSync(val.filePath, 'r');
+            var bufSize = 0;
+            var bufCap = 1<<16
+            var buf = new Buffer(bufCap);
+
+            while(true)
+            {
+                // read til buffer is full
+                while (bufSize < bufCap)
+                {
+                    var nread = fs.readSync(fd, buf, bufSize, bufCap-bufSize, null);
+                    if (nread == 0) break;
+                    bufSize += nread;
+                }
+
+                if (bufSize == bufCap)
+                {
+                    bufSize = 0;
+                    httpReq.write(buf);
+                    continue;
+                }
+
+                httpReq.write(buf.slice(0, bufSize));
+                break;
+            }
 
             httpReq.write("\r\n", 'ascii');
         }

@@ -4,23 +4,24 @@ const util = require('./util');
 
 // Maps from typeName to class function
 var subClasses = {}; // private static field
+var normNames = {}; // normalize the type name
 
 module.exports = (function(){
     // constructor
-    function cls(_acct)
+    function cls(app, acct)
     {
-        // private instance fields
-        var acct = _acct; 
-
         // public instance method
-        this.send = function(probId, filePath){
+        this.send = function(probNum, filePath, callback){
             // suf includes the dot
             var suf = path.extname(filePath);
             if (suf.length <= 1)
-                throw "Cannot auto-detect language";
+            {
+                callback({message: "Cannot auto-detect language"});
+                return;
+            }
 
             suf = suf.substring(1).toLowerCase();
-            this._send(probId, filePath, suf);
+            this._send(probNum, filePath, suf, callback);
         };
 
         this.account  = function(){
@@ -28,10 +29,14 @@ module.exports = (function(){
         };
     }
 
+    cls.normalizeType = function(s){
+        return normNames[s.toLowerCase()];
+    };
+
     // public static method
-    cls.create = function(acct){
+    cls.create = function(app, acct){
         var clsFn = subClasses[acct.type().toLowerCase()];
-        if (clsFn) return new clsFn(acct);
+        if (clsFn) return new clsFn(app, acct);
         return null;
     };
 
@@ -48,6 +53,8 @@ module.exports = (function(){
         var match = /^adapter(\w+)/i.exec(files[i]);
         if (!match) continue;
         var modName = match[1];
-        subClasses[modName.toLowerCase()] = require('./'+files[i]);
+        var lower = modName.toLowerCase();
+        normNames[lower] = modName;
+        subClasses[lower] = require('./'+files[i]);
     }
 })();

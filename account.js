@@ -1,11 +1,13 @@
 const cryptoUtil = require('./cryptoUtil');
+const Adapter = require('./adapter');
 
 module.exports = (function(){
     // constructor
     function cls(data)
     {
         // private instance fields
-        var type = data.type;
+        var type = Adapter.normalizeType(data.type);
+        var typeLower = type.toLowerCase();
         var user = data.user;
         var passIv = data.passIv;
         
@@ -17,7 +19,8 @@ module.exports = (function(){
             type: type,
             user: user,
             pass: pass,
-            passIv: passIv
+            passIv: passIv,
+            adapData: data.adapData || {}
         };
 
         // encrypted?
@@ -38,13 +41,21 @@ module.exports = (function(){
         /**
          * Gets the JSON object to be stringified.
          */
-        this.toJson = function(){
+        this.toJSON = function(){
             return obj;
         };
 
         this.user = function(){return user;};
         this.pass = function(){return pass;};
         this.type = function(){return type;};
+
+        this.match = function(_type, _user){
+            return _type.toLowerCase() == typeLower && user == _user;
+        };
+
+        this.getAdapterData = function(){
+            return obj.adapData;
+        };
     }
 
     return cls;

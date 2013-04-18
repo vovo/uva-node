@@ -20,88 +20,212 @@ const INPUT_PATTERN =
 
 module.exports = (function(parentCls){
     // constructor
-    function cls(_acct)
+    function cls(app, acct)
     {
         // super constructor call
-        parentCls.call(this, _acct);
+        parentCls.call(this, app, acct);
 
         // private instance fields
-        var acct = this.account();
-        var userId = -1;
+        var acctData = acct.getAdapterData();
+        var adapData = app.getAdapterData('uva');
         var cookies = '';
 
         // private instance method
         function fetchUserId(callback)
         {
-            userId > 0 ? 
-                callback(userId) : 
+            acctData.userId > 0 ? 
+                callback(null, acctData.userId) : 
                 util.createReq(
                     'GET', 
                     UHUNT_HOST, 
                     '/api/uname2uid/'+acct.user(),
-                    new (function(){
-                        var buf = '';
-                        return function(inMsg){
-                            inMsg.setEncoding('utf8');
-                            inMsg.on('end', function(){
-                                callback(userId = parseInt(buf));
-                            });
-                            inMsg.on('readable', function(){
-                                buf += inMsg.read() || '';
-                            });
-                        };
-                    })()
-                ).end();
+                    util.createEndCallback(function(buf){
+                        callback(null, acctData.userId = parseInt(buf));
+                    })
+                ).on('error', callback)
+                 .end();
         };
+
+        function fetchProbs(callback)
+        {
+            adapData.probs ? 
+                callback(null, adapData.probs) :
+                util.createReq(
+                    'GET',
+                    UHUNT_HOST,
+                    '/api/p',
+                    util.createEndCallback(function(buf){
+                        var p = JSON.parse(buf);
+                        p.map = {}; // maps prob ID to array index
+                        for (var i=0;i < p.length; i++)
+                        {
+                            p.map[p[i][0]+''] = i; 
+                        }
+                        callback(null, adapData.probs = p);
+                    })
+                ).on('error', callback)
+                 .end(); 
+        }
 
         // public instance method
         this.login = function(callback){
-            function callback2(inMsg)
-            {
-                inMsg.setEncoding('utf8');
-                inMsg.on('readable', function(){inMsg.read();});
-                inMsg.on('end', function(){
-                    cookies = util.getCookies(inMsg);
-                    callback();
-                });
-            }
+            var callback2 = util.createEndCallback(function(_, inMsg){    
+                cookies = util.getCookies(inMsg);
+                callback();
+            });
 
-            var callback1 = new (function(){
-                var html = '';
-                return function(inMsg){
-                    inMsg.setEncoding('utf8');
-                    inMsg.on('end', function(){
-                        var f = cls.parseForm(LOGIN_FORM_PATTERN, html);
-                        if (!f)
-                            throw ("cannot find HTML form");
-                        if (!f.userField)
-                            throw ("cannot find user field");
-                        if (!f.passField)
-                            throw ("cannot find pass field");
-                        if (!f.action)
-                            throw ("cannot find action");
+            var callback1 = util.createEndCallback(function(html, inMsg){
+                var f = cls.parseForm(LOGIN_FORM_PATTERN, html);
+                var err= null;
+                if (!f)
+                    err = ("cannot find HTML form");
+                else if (!f.userField)
+                    err = ("cannot find user field");
+                else if (!f.passField)
+                    err = ("cannot find pass field");
+                else if (!f.action)
+                    err = ("cannot find action");
 
-                        var cookies = util.getCookies(inMsg);
-                        f.data[f.userField] = acct.user();
-                        f.data[f.passField] = acct.pass();
+                if (err)
+                {
+                    callback({message: err});
+                    return;
+                }
 
-                        var req = util.createReq(
-                                'POST', UVA_HOST, f.action, callback2
-                            );
-                        req.setHeader('Cookie', cookies);
-                        util.writePostData(req, f.data);
-                    });
-                    inMsg.on('readable', function(){
-                        html += inMsg.read() || '';
-                    });
-                };
-            })();
+                var cookies = util.getCookies(inMsg);
+                f.data[f.userField] = acct.user();
+                f.data[f.passField] = acct.pass();
 
-            util.createReq('GET', UVA_HOST, '/', callback1).end();
+                var req = util.createReq(
+                        'POST', UVA_HOST, f.action, callback2
+                    );
+                req.on('error', callback);
+                req.setHeader('Cookie', cookies);
+                util.writePostData(req, f.data);
+            });
+
+            util.createReq('GET', UVA_HOST, '/', callback1)
+                .on('error', callback)
+                .end();            
         };
 
-        this._send = function(probId, filePath, lang){
-            // TODO
+        this._send = function(probNum, filePath, lang, callback){
+            var callback10 = util.createEndCallback(function(html){
+                console.log(html);
+                callback(null);
+            });
+
+            var langVal;
+            switch (lang)
+            {
+            case 'c': langVal = 1; break;
+            case 'java': langVal = 2; break;
+            case 'cpp': langVal = 3; break;
+            case 'p':
+            case 'pascal':
+            case 'pas': langVal = 4; break;
+            default:
+                callback({message:'unacceptable programming lang'});
+                return;
+            }
+
+            var data = {
+                localid: probNum,
+                code: '',
+                language: langVal,
+                codeupl: {filePath: filePath},
+                problemid: '',
+                category: ''
+            };
+            
+            var req = util.createReq('POST', UVA_HOST, SUBMIT_PATH, callback10);
+            req.on('error', callback);
+            req.setHeader('Cookie', cookies);
+            try
+            {
+                util.writeFormData(req, data);        
+            }
+            catch(e)
+            {
+                callback(typeof e =='string' ? {message: e} : e);
+            }
+        };
+
+        this.fetchStatus = function(callback){
+            var callback10 = util.createEndCallback(new (function(){
+                var tries = 0;
+        
+                function process(buf)
+                {
+                    var obj = JSON.parse(buf);
+                    var subs = obj.subs; 
+                    if (typeof(subs) == 'string')
+                        subs = JSON.parse(subs);
+
+                    // latest at 0th elem.
+                    subs.sort(function(a,b){return b[0] - a[0];});
+
+                    /*
+                    subs[i] is an array with fields in this order:
+                    0: Submission ID
+                    1: Problem ID
+                    2: Verdict ID
+                    3: Runtime
+                    4: Submission Time (unix timestamp)
+                    5: Language ID (1=ANSI C, 2=Java, 3=C++, 4=Pascal)
+                    6: Submission Rank
+                    */
+
+                    var p = adapData.probs;
+                    var outdated = false;
+                    for (var i=0;i < subs.length; i++)
+                    {
+                        var cur = subs[i];
+                        var idx = p.map[cur[1]]+'';
+                        if (p[idx])
+                            cur[1] = p[idx][1];
+                        else
+                        {
+                            cur[1] = -1;
+                            outdated = true;
+                            // don't break
+                        }
+
+                        cur[2] = cls.getVerdict(cur[2]);
+                        cur[5] = cls.getLang(cur[5]);
+                    }
+
+                    if (outdated && tries++ < 1) 
+                    {
+                        // retry
+                        adapData.probs = null;
+                        return fetchProbs(function(){
+                            process(buf);
+                        });
+                    }
+
+                    callback(null, subs);
+                }
+
+                return process;
+            })());
+
+            function callback05(e)
+            {
+                if (e) callback(e);
+                else
+                    fetchUserId(function(e2, userId){
+                        if (e2) callback(e2);
+                        else
+                            util.createReq(
+                                'GET', 
+                                UHUNT_HOST, 
+                                '/api/subs/'+userId, 
+                                callback10).on('error', callback).end();
+                    });
+            }
+
+            fetchProbs(callback05);
         };
     }
 
@@ -201,138 +325,3 @@ module.exports = (function(parentCls){
 
     return cls;
 })(Adapter);
-
-
-
-/*
-    @Override
-   
-    @Override
-    protected void send(String probId, Lang lang, File  contents)
-        throws IOException
-    {
-        HttpURLConnection conn = Util.createConnection(
-                SUBMIT_PAGE_URL, false
-            );
-
-        conn.setRequestProperty("Cookie", this.cookies);
-        Util.readAll(conn);
-
-        conn = Util.createConnection(
-                SUBMIT_URL, false
-            );
-
-        conn.setRequestProperty("Referer", SUBMIT_PAGE_URL.toString());
-        conn.setRequestProperty("Cookie", this.cookies);
-
-        String langVal = null;
-
-        if (lang.equals(Lang.C)) langVal = "1";
-        else if (lang.equals(Lang.JAVA)) langVal = "2";
-        else if (lang.equals(Lang.CPP)) langVal = "3";
-        else if (lang.equals(Lang.PASCAL)) langVal = "4";
-        else throw new RuntimeException("unacceptable programming lang");
-
-        Map<String,Object> data = new HashMap<String,Object>();        
-        data.put("localid", probId);
-        data.put("code", "");
-        data.put("language", langVal);
-        data.put("codeupl", contents);
-        data.put("problemid", "");
-        data.put("category", "");
-
-        // Because UVA will redirect 
-        conn.setInstanceFollowRedirects(false);
-        
-        Util.writeFormData(conn, data);
-        Util.readAll(conn);
-
-    }
-
-
-    @Override
-    public void printStatus()
-        throws Exception
-    {
-        final int userId = this.fetchUserId();
-
-        HttpURLConnection conn = Util.createConnection(
-                new URL("http://uhunt.felix-halim.net/api/subs/"+userId), false
-            );
-
-        String all  = Util.readAll(conn);
-        JSONObject obj = new JSONObject(all);
-        Object subStr = obj.get("subs");
-        JSONArray subs = null;
-        if (subStr instanceof String)
-        {
-            String str = (String) subStr;
-            subs = new JSONArray(str);
-        }
-        else
-        {
-            subs = (JSONArray) subStr;
-        }
-
-        int len = subs.length();
-
-        List<JSONArray> list = new ArrayList<JSONArray>();
-        for (int i = 0; i < len;i++)
-        {
-            list.add(subs.getJSONArray(i));            
-        }
-
-        // sort by subm id. Latest will be at 0th elem.
-        Collections.sort(list, new Comparator<JSONArray>(){
-            @Override
-            public int compare(JSONArray a1, JSONArray a2)
-            {
-                try
-                {
-                    long k = a2.getLong(0) - a1.getLong(0);
-                    if (k < 0) return -1;
-                    if (k > 0) return 1;
-                    return 0;
-                }
-                catch(Exception e)
-                {
-                    // omg so fcking annoying with exceptions.
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
-        System.out.println("SubId     | ProbId |      Verdict     |  Lang  | Runtime | ");
-        //                  123456789---123456---1234567890123456---123456---1234567---
-
-        int iterLen = Math.min(10, list.size());
-        for (int i = 0; i < iterLen;i++)
-        {
-            JSONArray sub = list.get(i);
-
-            /*
-            Format:
-            Submission ID
-            Problem ID
-            Verdict ID
-            Runtime
-            Submission Time (unix timestamp)
-            Language ID (1=ANSI C, 2=Java, 3=C++, 4=Pascal)
-            Submission Rank
-            
-
-            long subId = sub.getInt(0);
-            int probId = sub.getInt(1);
-            int verdictId = sub.getInt(2);
-            int runtime = sub.getInt(3);
-            long time = sub.getLong(4);
-            int langId = sub.getInt(5);
-            int rank = sub.getInt(6);
-
-            System.out.format("% 9d   % 6d   %16s   %6s   % 3d.%03d\n", 
-                subId, probId, getVerdict(verdictId),
-                getLang(langId), runtime/1000, runtime%1000);
-        }
-    }
-}
-*/
