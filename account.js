@@ -50,7 +50,7 @@ module.exports = (function(){
         this.type = function(){return type;};
 
         this.match = function(_type, _user){
-            return _type.toLowerCase() == typeLower && user == _user;
+            return _type.toLowerCase() === typeLower && user === _user;
         };
 
         this.getAdapterData = function(){

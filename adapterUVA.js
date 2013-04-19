@@ -12,7 +12,7 @@ const UHUNT_HOST = 'uhunt.felix-halim.net';
 const LOGIN_FORM_PATTERN =
     // group 1: form attribs
     // group 2: form HTML contents 
-    /<form([^>]+?id\s*=\s*["']?\w*login[^>]*)>((?:.|\n)*?)<\/form>/gi;
+    /<form([^>]+?id\s*=\s*["']?\w*login[^>]*)>((?:.|\n)*?)<\/form>/i;
 
 const INPUT_PATTERN =
     // group 1: attribs 
@@ -55,12 +55,22 @@ module.exports = (function(parentCls){
                     UHUNT_HOST,
                     '/api/p',
                     util.createEndCallback(function(buf){
-                        var p = JSON.parse(buf);
-                        p.map = {}; // maps prob ID to array index
+                        var p;
+                        try
+                        {
+                            p = JSON.parse(buf);
+                        }
+                        catch (e)
+                        {
+                            return callback(e);
+                        }
+
+                        var map = {}; // maps prob ID to array index
                         for (var i=0;i < p.length; i++)
                         {
-                            p.map[p[i][0]+''] = i; 
+                            map[p[i][0].toString()] = i; 
                         }
+                        adapData.map = map;
                         callback(null, adapData.probs = p);
                     })
                 ).on('error', callback)
@@ -88,8 +98,7 @@ module.exports = (function(parentCls){
 
                 if (err)
                 {
-                    callback({message: err});
-                    return;
+                    return callback({message: err});
                 }
 
                 var cookies = util.getCookies(inMsg);
@@ -111,7 +120,7 @@ module.exports = (function(parentCls){
 
         this._send = function(probNum, filePath, lang, callback){
             var callback10 = util.createEndCallback(function(html){
-                if (html.match(/not\s+authorised/gi))
+                if (html.match(/not\s+authorised/i))
                     callback({message: 'cannot login. password correct?'});
                 else
                     callback(null);
@@ -149,82 +158,81 @@ module.exports = (function(parentCls){
             }
             catch(e)
             {
-                callback(typeof e =='string' ? {message: e} : e);
+                callback(typeof e ==='string' ? {message: e} : e);
             }
         };
 
         this.fetchStatus = function(callback){
-            var callback10 = util.createEndCallback(new (function(){
-                var tries = 0;
-        
-                function process(buf)
+            var tries = 0;
+            function process(buf)
+            {
+                var obj = JSON.parse(buf);
+                var subs = obj.subs; 
+                if (typeof(subs) === 'string')
+                    subs = JSON.parse(subs);
+
+                // latest at 0th elem.
+                subs.sort(function(a,b){return b[0] - a[0];});
+
+                /*
+                subs[i] is an array with fields in this order:
+                0: Submission ID
+                1: Problem ID
+                2: Verdict ID
+                3: Runtime
+                4: Submission Time (unix timestamp)
+                5: Language ID (1=ANSI C, 2=Java, 3=C++, 4=Pascal)
+                6: Submission Rank
+                */
+
+                var p = adapData.probs;
+                var map = adapData.map;
+                var outdated = false;
+                for (var i=0;i < subs.length; i++)
                 {
-                    var obj = JSON.parse(buf);
-                    var subs = obj.subs; 
-                    if (typeof(subs) == 'string')
-                        subs = JSON.parse(subs);
-
-                    // latest at 0th elem.
-                    subs.sort(function(a,b){return b[0] - a[0];});
-
-                    /*
-                    subs[i] is an array with fields in this order:
-                    0: Submission ID
-                    1: Problem ID
-                    2: Verdict ID
-                    3: Runtime
-                    4: Submission Time (unix timestamp)
-                    5: Language ID (1=ANSI C, 2=Java, 3=C++, 4=Pascal)
-                    6: Submission Rank
-                    */
-
-                    var p = adapData.probs;
-                    var outdated = false;
-                    for (var i=0;i < subs.length; i++)
+                    var cur = subs[i];
+                    var idx = map[cur[1].toString()];
+                    if (p[idx])
+                        cur[1] = p[idx][1];
+                    else
                     {
-                        var cur = subs[i];
-                        var idx = p.map[cur[1]]+'';
-                        if (p[idx])
-                            cur[1] = p[idx][1];
-                        else
-                        {
-                            cur[1] = -1;
-                            outdated = true;
-                            // don't break
-                        }
-
-                        cur[2] = cls.getVerdict(cur[2]);
-                        cur[5] = cls.getLang(cur[5]);
+                        cur[1] = -1;
+                        outdated = true;
+                        // don't break
                     }
 
-                    if (outdated && tries++ < 1) 
-                    {
-                        // retry
-                        adapData.probs = null;
-                        return fetchProbs(function(){
-                            process(buf);
-                        });
-                    }
-
-                    callback(null, subs);
+                    cur[2] = cls.getVerdict(cur[2]);
+                    cur[5] = cls.getLang(cur[5]);
                 }
 
-                return process;
-            })());
+                if (outdated && tries++ < 1) 
+                {
+                    // retry
+                    adapData.probs = null;
+                    return fetchProbs(function(e){
+                        if (e) return callback(e);
+                        process(buf);
+                    });
+                }
+
+                callback(null, subs);
+            }
+
+            var callback10 = util.createEndCallback(process);
 
             function callback05(e)
             {
-                if (e) callback(e);
-                else
-                    fetchUserId(function(e2, userId){
-                        if (e2) callback(e2);
-                        else
-                            util.createReq(
-                                'GET', 
-                                UHUNT_HOST, 
-                                '/api/subs/'+userId, 
-                                callback10).on('error', callback).end();
-                    });
+                if (e) return callback(e);
+
+                fetchUserId(function(e2, userId){
+                    if (e2) return callback(e2);
+
+                    util.createReq(
+                        'GET', 
+                        UHUNT_HOST, 
+                        '/api/subs/'+userId, 
+                        callback10).on('error', callback).end();
+                });
             }
 
             fetchProbs(callback05);
@@ -242,7 +250,7 @@ module.exports = (function(parentCls){
 
         for (var key in atts)
         {
-            if (key.toLowerCase() == 'action')
+            if (key.toLowerCase() === 'action')
             {
                 r.action = util.htmlDecodeSimple(atts[key]);
                 break;
@@ -263,7 +271,7 @@ module.exports = (function(parentCls){
                 switch(keyLower)
                 {
                 case 'type':
-                    isText = (valLower == 'password' || valLower == 'text');
+                    isText = (valLower === 'password' || valLower === 'text');
                     break;
                 case 'name':
                     name = val;

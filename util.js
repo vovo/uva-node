@@ -12,14 +12,12 @@ const ATTRIB_PATTERN =
 (function(obj){
 
 obj.createEndCallback = function(callback){
-    return new (function(){
-        var buf = '';
-        return function(inMsg){
-            inMsg.setEncoding('utf8');
-            inMsg.on('readable', function(){buf += inMsg.read() || '';})
-                 .on('end', function(){callback(buf, inMsg)});
-        }
-    })();
+    var buf = '';
+    return function(inMsg){
+        inMsg.setEncoding('utf8');
+        inMsg.on('readable', function(){buf += inMsg.read() || '';})
+             .on('end', function(){callback(buf, inMsg);});
+    };
 };
 
 /**
@@ -43,30 +41,21 @@ obj.createEndCallback = function(callback){
  */
 obj.unquote = function(s){
     s = s.trim();
-    
-    if (s.length >= 2)
+    if (s.length >= 1)
     {
         var start = s.charAt(0);
-        var end = s.charAt(s.length-1);
-        
+        var end = s.length >= 2 ? s.charAt(s.length-1) : 0;
         var isQuote = 
-           (start == '"' || start == '\'' ||
-            end   == '"' || end   == '\'');
+           (start === '"' || start === '\'' ||
+            end   === '"' || end   === '\'');
             
         if (isQuote)
         {
-            if (start != end)
-                throw ("different quote chars");
-        
-            return s.substring(1, s.length-1);
+            if (start === end)
+                return s.substring(1, s.length-1);
+                
+            throw {message: "mismatched quote chars"};
         }
-    }
-    else if (s.length >= 1)
-    {
-        var start = s.charAt(0);
-
-        if (start == '"' || start == '\'')
-            throw ("unmatched starting quote");
     }
 
     return s;
@@ -93,7 +82,7 @@ obj.parseAttribs = function(html){
 obj.getUserHomePath = function () {
     var p = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
     if (p) return p;
-    throw "Cannot determine user home dir";
+    throw {message: "Cannot determine user home dir"};
 };
 
 obj.htmlDecodeSimple = function(s){
@@ -161,7 +150,7 @@ obj.writeFormData = function(httpReq, data){
         httpReq.write('--'+boundStr, 'ascii');
 
         // file upload?
-        if (typeof val == 'object' && val.filePath)
+        if (typeof val === 'object' && val.filePath)
         {
             httpReq.write("\r\nContent-Disposition: form-data; name=\""+ key +
                 "\"; filename=\""+val.filePath+"\"\r\n"+
@@ -181,7 +170,7 @@ obj.writeFormData = function(httpReq, data){
                     bufSize += nread;
                 }
 
-                if (bufSize == bufCap)
+                if (bufSize === bufCap)
                 {
                     bufSize = 0;
                     httpReq.write(buf);
@@ -214,7 +203,7 @@ obj.writeFormData = function(httpReq, data){
 obj.getCookies = function(inMsg){
     
     var cookies = inMsg.headers["set-cookie"];
-    if (typeof cookies == 'string')
+    if (typeof cookies === 'string')
     {
         cookies = [cookies];
     }

@@ -44,16 +44,9 @@ module.exports = (function(){
 
             curAcct = null;
             curAdap = null;
-            if (settings.curAcct && settings.curAcct.length == 2)
+            if (settings.curAcct && settings.curAcct.length === 2)
             {
-                var idx = findAcct(settings.curAcct[0], settings.curAcct[1]);
-                if (idx >= 0)
-                {
-                    curAcct = accts[idx];
-                    curAdap = Adapter.create(this, curAcct);
-                    if (! curAdap)
-                        curAcct = null;
-                }
+                this.use(settings.curAcct[0], settings.curAcct[1]);
             }
         };
 

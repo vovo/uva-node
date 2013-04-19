@@ -30,7 +30,7 @@ rl.on('line', function(line) {
 
     function checkToks(argsCount, syntax)
     {
-        if (toks.length != argsCount+1)
+        if (toks.length !== argsCount+1)
         {
             console.log('Syntax: %s', syntax);
             return false;
@@ -100,7 +100,8 @@ rl.on('line', function(line) {
             });
 
             if (ok) return;
-            else console.log('No current account selected');
+            
+            console.log('No current account selected');
         }
         catch (e)
         {
@@ -109,7 +110,7 @@ rl.on('line', function(line) {
         break;
 
     case 'use':
-        if (toks.length == 3)
+        if (toks.length === 3)
         {
             var ok = app.use(toks[1], toks[2]);
             if (ok)
@@ -117,7 +118,7 @@ rl.on('line', function(line) {
             else
                 console.log('No such account');
         }
-        else if (toks.length == 1)
+        else if (toks.length === 1)
         {
             app.useNone();
             console.log('Current account set to none');
@@ -153,7 +154,7 @@ rl.on('line', function(line) {
         var cur = app.getCurrent();
         if (cur && cur.match(toks[1], toks[2]))
         {
-            console.log('Account is current');
+            console.log('Account is current. Cannot remove');
             break;
         }
 
