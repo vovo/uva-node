@@ -6,8 +6,9 @@ and check your submissions.
 Features
 ========
 - Remembers your account info and encrypts your passwords.
-- Password-less submission.
-- Check most recent submission status.
+- Password-less submissions.
+- Checks most recent submission status.
+- Cross-platform: Linux, Mac OS X, Windows or whatever node.js runs on
 
 Requirements
 ============
@@ -22,13 +23,16 @@ Running
 
 1.  Install node.js if you haven't: http://nodejs.org
 2. `git clone https://github.com/lucastan/uva-node.git` (recommended) 
-    or download the source.
+    or download the source https://github.com/lucastan/uva-node/archive/master.zip
 3.  `node uva-node`
 
 The program will generate a settings file and a random key the first 
 time it is run, and will use the key to encrypt all your account passwords.
 The key is stored at `~/.ssh/uva-node.key`. You don't have to generate 
 an SSH key nor will the program use your SSH key.
+
+Settings are saved in the JSON format at `~/.uva-node`
+where ~ is your home directory. Please do not modify manually.
 
 To upgrade to the latest version, simply do `git pull` in the uva-node dir!
 
@@ -40,11 +44,28 @@ Usage
 UVA-NODE is an interactive shell which you can type commands.
 Commands are of the syntax: `<action> <arg1> <arg2> ...`
 
-Settings are saved in the JSON format at `~/.uva-node`
-where ~ is your home directory. Please do not modify manually.
-All passwords are encrypted.
+Sample session:
+<pre>
+> add uva john.doe my-secret-password
+Account added
 
-The following are possible actions:
+> use uva john.doe
+
+> send 123 code.cpp
+Logging in...
+Sending code...
+Sent OK
+
+> stat
+Getting status...
+Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time
+ 11638387      125           accepted      C++     0.008     519   2013-04-20 13:35:04
+ 11629565      125           accepted      C++     0.016     900   2013-04-19 00:16:01
+...
+</pre>
+
+Actions
+=======
 
 add
 ----
@@ -102,28 +123,6 @@ Prints out the latest {count} submissions for the current account.
 quit / exit
 -----------
 Saves all settings including account info and exits the program.
-
-Example usage
-=============
-<pre>
-> add uva john_doe 12345
-Account added
-
-> use uva john_doe
-
-> send 123 code.cpp
-Logging in...
-Sending code...
-Sent OK
-
-> stat
-Getting status...
-SubId     | ProbId |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time 
-11605207      757           accepted      C++     0.020      567   2013-04-20 13:12:11
-11605200      757           accepted      C++     0.024     5656   2013-04-19 00:11:12
-...
-</pre>
-
 
 More features coming soon
 ==========================
