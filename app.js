@@ -66,18 +66,6 @@ module.exports = (function(){
             return adapData[type] || (adapData[type] = {});
         };
 
-        this.login = function(callback){
-            if (!curAdap) return false;
-            curAdap.login(callback);
-            return true;
-        };
-
-        this.send = function(probNum, filePath, callback){
-            if (!curAdap) return false;
-            curAdap.send(probNum, filePath, callback);
-            return true;
-        };
-
         /**
          * Adds a new account, or replaces an existing one.
          * @return boolean true if acct is added ok.
@@ -118,6 +106,10 @@ module.exports = (function(){
             return curAcct;
         };
 
+        this.getCurrentAdapter = function(){
+            return curAdap;
+        };
+
         this.useNone = function(){
             curAdap = curAcct = null;
         };
@@ -135,7 +127,6 @@ module.exports = (function(){
 
             curAcct = accts[idx];
             curAdap = a;
-
             return true;
         };
 
@@ -145,15 +136,6 @@ module.exports = (function(){
          */
         this.getAll = function(){
             return accts;
-        };
-
-        /**
-         * @return boolean true if fetching is started
-         */
-        this.fetchStatus = function(callback){
-            if (! curAdap) return false;
-            curAdap.fetchStatus(callback);
-            return true;
         };
     }
 
