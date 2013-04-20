@@ -116,11 +116,11 @@ Logging in...
 Sending code...
 Sent OK
 
-> status
+> stat
 Getting status...
-SubId     | ProbId |      Verdict     |  Lang  | Runtime | 
-11605207      757           accepted      C++     0.020
-11605200      757           accepted      C++     0.024
+SubId     | ProbId |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time 
+11605207      757           accepted      C++     0.020      567   2013-04-20 13:12:11
+11605200      757           accepted      C++     0.024     5656   2013-04-19 00:11:12
 ...
 </pre>
 
