@@ -33,28 +33,32 @@ module.exports = (function(parentCls){
         // private instance method
         function fetchUserId(callback)
         {
+            var req;
             acctData.userId > 0 ? 
                 callback(null, acctData.userId) : 
-                util.createReq(
+                (req = util.createReq(
                     'GET', 
                     UHUNT_HOST, 
                     '/api/uname2uid/'+acct.user(),
                     util.createEndCallback(function(buf){
+                        req.removeListener('error', callback);
                         callback(null, acctData.userId = parseInt(buf));
                     })
-                ).on('error', callback)
+                )).on('error', callback)
                  .end();
         };
 
         function fetchProbs(callback)
         {
+            var req;
             adapData.probs ? 
                 callback(null, adapData.probs) :
-                util.createReq(
+                (req = util.createReq(
                     'GET',
                     UHUNT_HOST,
                     '/api/p',
                     util.createEndCallback(function(buf){
+                        req.removeListener('error', callback);
                         var p;
                         try
                         {
@@ -73,18 +77,21 @@ module.exports = (function(parentCls){
                         adapData.map = map;
                         callback(null, adapData.probs = p);
                     })
-                ).on('error', callback)
+                )).on('error', callback)
                  .end(); 
         }
 
         // public instance method
         this.login = function(callback){
+            var req, req2;
             var callback2 = util.createEndCallback(function(_, inMsg){    
+                req2.removeListener('error', callback);
                 cookies = util.getCookies(inMsg);
                 callback();
             });
 
             var callback1 = util.createEndCallback(function(html, inMsg){
+                req.removeListener('error', callback);
                 var f = cls.parseForm(LOGIN_FORM_PATTERN, html);
                 var err= null;
                 if (!f)
@@ -97,48 +104,35 @@ module.exports = (function(parentCls){
                     err = ("cannot find action");
 
                 if (err)
-                {
                     return callback({message: err});
-                }
 
                 var cookies = util.getCookies(inMsg);
                 f.data[f.userField] = acct.user();
                 f.data[f.passField] = acct.pass();
 
-                var req = util.createReq(
-                        'POST', UVA_HOST, f.action, callback2
-                    );
-                req.on('error', callback);
-                req.setHeader('Cookie', cookies);
-                util.writePostData(req, f.data);
+                (req2 = util.createReq('POST', UVA_HOST, f.action, callback2))
+                    .on('error', callback)
+                    .setHeader('Cookie', cookies);
+                util.writePostData(req2, f.data);
             });
 
-            util.createReq('GET', UVA_HOST, '/', callback1)
+            (req = util.createReq('GET', UVA_HOST, '/', callback1))
                 .on('error', callback)
                 .end();            
         };
 
         this._send = function(probNum, filePath, lang, callback){
+            var req;
             var callback10 = util.createEndCallback(function(html){
-                if (html.match(/not\s+authorised/i))
+                req.removeListener('error', callback);
+                if (html.match(/not\s+authori[zs]ed/i))
                     callback({message: 'cannot login. password correct?'});
                 else
-                    callback(null);
+                    callback();
             });
 
-            var langVal;
-            switch (lang)
-            {
-            case 'c': langVal = 1; break;
-            case 'java': langVal = 2; break;
-            case 'cpp': langVal = 3; break;
-            case 'p':
-            case 'pascal':
-            case 'pas': langVal = 4; break;
-            default:
-                callback({message:'unacceptable programming lang'});
-                return;
-            }
+            var langVal = cls.getLangVal(lang);
+            if (langVal < 0) return callback({message: 'unacceptable programming lang'});
 
             var data = {
                 localid: probNum,
@@ -149,9 +143,10 @@ module.exports = (function(parentCls){
                 category: ''
             };
             
-            var req = util.createReq('POST', UVA_HOST, SUBMIT_PATH, callback10);
-            req.on('error', callback);
-            req.setHeader('Cookie', cookies);
+            (req = util.createReq('POST', UVA_HOST, SUBMIT_PATH, callback10))
+                .on('error', callback)
+                .setHeader('Cookie', cookies);
+            
             try
             {
                 util.writeFormData(req, data);        
@@ -162,7 +157,7 @@ module.exports = (function(parentCls){
             }
         };
 
-        this.fetchStatus = function(callback){
+        this.fetchStatus = function(num, callback){
             var tries = 0;
             function process(buf)
             {
@@ -170,10 +165,13 @@ module.exports = (function(parentCls){
                 var subs = obj.subs; 
                 if (typeof(subs) === 'string')
                     subs = JSON.parse(subs);
-
+                
                 // latest at 0th elem.
                 subs.sort(function(a,b){return b[0] - a[0];});
 
+                // must sort first then slice
+                if (subs.length > num) 
+                    subs = subs.slice(0, num);
                 /*
                 subs[i] is an array with fields in this order:
                 0: Submission ID
@@ -202,6 +200,7 @@ module.exports = (function(parentCls){
                     }
 
                     cur[2] = cls.getVerdict(cur[2]);
+                    cur[4] *= 1000; // convert to millisec
                     cur[5] = cls.getLang(cur[5]);
                 }
 
@@ -297,6 +296,20 @@ module.exports = (function(parentCls){
         }
 
         return r;
+    };
+
+    cls.getLangVal = function(lang){ 
+        switch (lang)
+        {
+        case 'c': return 1; 
+        case 'java': return 2; 
+        case 'cpp': return 3; 
+        case 'p':
+        case 'pascal':
+        case 'pas': return 4; 
+        }
+
+        return -1;
     };
 
     cls.getVerdict = function(ver)
