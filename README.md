@@ -94,9 +94,10 @@ The program will auto-detect the language using the file name extension:
 
 status / stat
 -------------
-Syntax: status
+Syntax: status/stat {count}
 
-Prints out the latest ten submissions for the current account.
+Prints out the latest {count} submissions for the current account.
+{count} defaults to 10 if omitted.
 
 quit / exit
 -----------
