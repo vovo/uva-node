@@ -10,6 +10,26 @@ Features
 - Checks most recent submission status.
 - Cross-platform: Linux, Mac OS X, Windows or whatever node.js runs on
 
+Sample session:
+<pre>
+> add uva john.doe my-secret-password
+Account added
+
+> use uva john.doe
+
+> send 123 code.cpp
+Logging in...
+Sending code...
+Sent OK
+
+> stat
+Getting status...
+Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time
+ 11638387      125           accepted      C++     0.008     519   2013-04-20 13:35:04
+ 11629565      125           accepted      C++     0.016     900   2013-04-19 00:16:01
+...
+</pre>
+
 Requirements
 ============
 To run, you'd need node.js v0.10.0 and above. An older version might work
@@ -41,31 +61,10 @@ but only this node.js version will be actively maintained.
 
 Usage
 =====
-UVA-NODE is an interactive shell which you can type commands.
+UVA-NODE is an interactive shell in which you can type commands.
 Commands are of the syntax: `<action> <arg1> <arg2> ...`
 
-Sample session:
-<pre>
-> add uva john.doe my-secret-password
-Account added
-
-> use uva john.doe
-
-> send 123 code.cpp
-Logging in...
-Sending code...
-Sent OK
-
-> stat
-Getting status...
-Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time
- 11638387      125           accepted      C++     0.008     519   2013-04-20 13:35:04
- 11629565      125           accepted      C++     0.016     900   2013-04-19 00:16:01
-...
-</pre>
-
-Actions
-=======
+The following are possible actions:
 
 add
 ----
@@ -137,12 +136,6 @@ Credits
 - UVA website
 - uHunt API
 - node.js
-
-Disclaimer
-==========
-While every effort has been made to ensure this software is free of defects, 
-this software comes with ABSOLUTELY NO WARRANTY to the maximum extent 
-permitted by the law.
 
 License
 =======
