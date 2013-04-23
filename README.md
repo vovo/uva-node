@@ -103,6 +103,8 @@ Syntax:
 tpl add {filePath}: 
 - Adds or replaces an existing template. The program will merely store the file path,
 and will *not* copy the template file to another place.
+- Recommended that filePath is absolute, instead of relative, to avoid path issues,
+  and make it independent of where you launch the editor.
 - Will detect language based on file extension.
 - Put the string `$caret_start$` in the template file at where you want to start typing the code.   
 
