@@ -22,9 +22,56 @@ else
     console.log('A new one will be created after exiting the program');
 }
 
-rl = readline.createInterface(process.stdin, process.stdout);
+var rl = readline.createInterface(process.stdin, process.stdout);
 
-rl.on('line', function(line) {
+function prompt()
+{    
+    console.log();
+    rl.prompt();
+}
+
+function printStatus(subs)
+{
+    console.log("Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time");
+    //           123456789---123456---1234567890123456---123456---1234567---12345---yyyy-mm-dd hh:mm:ss
+
+    var date = new Date();
+    for (var i = 0; i < subs.length;i++)
+    {
+        var sub = subs[i];
+        var subId = sub[0];
+        var probId = sub[1];
+        var verdict = sub[2];
+        var runtime = sub[3];
+        var time = sub[4]; // in millisec
+        var lang = sub[5];
+        var rank = sub[6];
+
+        date.setTime(time);
+        console.log(sprintf("%9d   %6d   %16s   %6s   %3d.%03d   %5s   %4d-%02d-%02d %02d:%02d:%02d", 
+            subId, probId, verdict,
+            lang, Math.floor(runtime/1000), runtime%1000,
+            rank < 0 ? '-' : rank > 9999 ? '>9999' : rank,
+            date.getFullYear(), date.getMonth()+1, date.getDate(),
+            date.getHours(), date.getMinutes(), date.getSeconds()));
+    }
+}
+
+function getCurrentAdapter()
+{ 
+    var curAdap = app.getCurrentAdapter();
+    if (curAdap) return curAdap;
+
+    console.log('No current account selected');
+}
+
+function printError(e)
+{
+    console.log('Error: ' + (e.message || e));
+}
+
+function onLine(line) 
+{
     var toks = line.trim().split(/\s+/g);
     var action = toks[0].toLowerCase();
 
@@ -39,45 +86,57 @@ rl.on('line', function(line) {
         return true;
     }
 
-    function prompt()
-    {    
-        console.log();
-        rl.prompt();
-    }
-
-    function printStatus(subs)
+    function tplHandle(subAction)
     {
-        console.log("Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time");
-        //           123456789---123456---1234567890123456---123456---1234567---12345---yyyy-mm-dd hh:mm:ss
-
-        var date = new Date();
-        for (var i = 0; i < subs.length;i++)
+        switch(subAction)
         {
-            var sub = subs[i];
-            var subId = sub[0];
-            var probId = sub[1];
-            var verdict = sub[2];
-            var runtime = sub[3];
-            var time = sub[4]; // in millisec
-            var lang = sub[5];
-            var rank = sub[6];
+        case 'add':
+            if (toks.length <= 2)
+            {
+                console.log('Syntax: tpl add <filePath>');
+                break;
+            }
 
-            date.setTime(time);
-            console.log(sprintf("%9d   %6d   %16s   %6s   %3d.%03d   %5s   %4d-%02d-%02d %02d:%02d:%02d", 
-                subId, probId, verdict,
-                lang, Math.floor(runtime/1000), runtime%1000,
-                rank < 0 ? '-' : rank > 9999 ? '>9999' : rank,
-                date.getFullYear(), date.getMonth()+1, date.getDate(),
-                date.getHours(), date.getMinutes(), date.getSeconds()));
+            var ok = app.getTemplateManager().add(toks[2]);
+            if (ok)
+                console.log('Added or replaced existing template');
+            else
+                console.log('Cannot detect language');
+
+            break;
+
+        case 'remove':
+            if (toks.length <= 2)
+            {
+                console.log('Syntax: tpl remove <lang>');
+                break;
+            }
+
+            var lang = util.getLang(toks[2]);
+            if (lang < 0)
+            {
+                console.log('Unknown language');
+                break;
+            }
+
+            app.getTemplateManager().remove(lang);
+            break;
+
+        case 'show':
+            console.log('lang     | file path');
+            //           12345678---
+            var tpls = app.getTemplateManager().getAll();
+            for (var key in tpls)
+            {
+                var path = tpls[key];
+                if (!path) continue;
+                console.log(sprintf('%-8s   %s', util.getLangName(key), path));
+            }
+            break;
+
+        default:
+            console.log('unknown sub action');
         }
-    }
-
-    function getCurrentAdapter()
-    { 
-        var curAdap = app.getCurrentAdapter();
-        if (curAdap) return curAdap;
-
-        console.log('No current account selected');
     }
 
     switch(action) 
@@ -88,10 +147,37 @@ rl.on('line', function(line) {
         rl.close();
         break;
 
+    case 'set-editor':
+        if (!checkToks(1, 'set-editor <editor path>')) break;
+        app.setEditor(toks[1]);
+        console.log('Editor set');
+        break;
+
+    case 'edit':
+        if (!checkToks(1, 'edit <file path>')) break;
+        app.edit(toks[1], function(e){
+            if (e)
+                console.log('Cannot edit: '+e.message);
+            else
+                console.log('Edit done');
+            prompt();
+        });
+        return;
+
+    case 'tpl':
+        if (toks.length <= 1)
+        {
+            console.log('Syntax: tpl add <filePath> OR tpl remove <lang> OR tpl show');
+            break;
+        }
+
+        var subAction = toks[1].toLowerCase();
+        tplHandle(subAction);
+        break;
+
     case 'send':
         var curAdap = getCurrentAdapter();
         if (!curAdap) break;
-        
         if (!checkToks(2, 'send <prob#> <fileName>')) break;
 
         try
@@ -119,18 +205,20 @@ rl.on('line', function(line) {
         }
         catch (e)
         {
-            console.log('Send error: '+e);
+            console.log('Send error: '+e.message);
         }
         break;
 
     case 'use':
         if (toks.length === 3)
         {
-            var ok = app.use(toks[1], toks[2]);
-            if (ok)
+            try {
+                app.use(toks[1], toks[2]);
                 console.log('Account set as current');
-            else
-                console.log('No such account');
+            }
+            catch (e){
+                printError(e);
+            }
         }
         else if (toks.length === 1)
         {
@@ -153,10 +241,9 @@ rl.on('line', function(line) {
         }
 
         var acct = new Account({type: toks[1], user: toks[2], pass: toks[3]});
-
-        var ok = app.add(acct);
-        if (!ok)
-            console.log('Error: trying to replace current account with new one');
+        var replaced = app.add(acct);
+        if (replaced)
+            console.log('An existing account was replaced');
         else
             console.log('Account added successfully');
         
@@ -165,30 +252,32 @@ rl.on('line', function(line) {
     case 'remove':
         if (!checkToks(2, 'remove <type> <userName>')) break;
 
-        var cur = app.getCurrent();
-        if (cur && cur.match(toks[1], toks[2]))
-        {
-            console.log('Account is current. Cannot remove');
-            break;
-        }
-
-        var ok = app.remove(toks[1], toks[2]);
-        if (ok)
+        try {
+            app.remove(toks[1], toks[2]);
             console.log('Account removed');
-        else
-            console.log('No such account');
-
+        }
+        catch(e) {
+            printError(e);
+        }
+        
         break;
 
     case 'show':
-        var accts = app.getAll();
-        
+        var size = app.size();
+
+        if (!size)
+        {
+            console.log('No accounts');
+            break;
+        }   
+
         console.log('      type     | user');
         //           12345678901234---1234
 
-        for (var i=0;i < accts.length; i++)
+        for (var i=0;i < size; i++)
         {
-            console.log(sprintf("%-14s   %s", accts[i].type(), accts[i].user()));
+            var acct = app.get(i);
+            console.log(sprintf("%-14s   %s", acct.type(), acct.user()));
         }
 
         break;
@@ -208,7 +297,7 @@ rl.on('line', function(line) {
                 break;
             }
         }
-        else if (toks.length != 1)
+        else if (toks.length !== 1)
         {
             console.log('Syntax: stat/status <count>');
             break;
@@ -231,12 +320,13 @@ rl.on('line', function(line) {
     }
 
     prompt();
+}
 
-}).on('close', function() {
+rl.on('line', onLine)
+  .on('close', function() {
     console.log('Have a great day!');
     process.exit(0);
 });
-
 rl.setPrompt('> ');
 rl.prompt();
 

@@ -1,8 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const spawn = require('child_process').spawn;
+const tty = require('tty');
 const util = require('./util');
+const errors = require('./errors');
 const Account = require('./account');
 const Adapter = require('./adapter');
+const TemplateManager = require('./template');
 
 module.exports = (function(){
     function cls()
@@ -20,6 +24,11 @@ module.exports = (function(){
 
         /** All accounts. */
         var accts = []; 
+
+        var tpls = {};
+        var tplMgr = new TemplateManager(this, tpls);
+
+        var editor;
 
         function findAcct(type, user)
         {
@@ -42,11 +51,18 @@ module.exports = (function(){
                 accts[i] = new Account(accts[i]);
             }
 
+            editor = settings.editor;
+            tplMgr = new TemplateManager(this, tpls = settings.tpls || {});
+
             curAcct = null;
             curAdap = null;
             if (settings.curAcct && settings.curAcct.length === 2)
             {
-                this.use(settings.curAcct[0], settings.curAcct[1]);
+                try
+                {
+                    this.use(settings.curAcct[0], settings.curAcct[1]);
+                }
+                catch (e){/*ignore*/}
             }
         };
 
@@ -54,11 +70,65 @@ module.exports = (function(){
             var settings = {
                 curAcct: curAcct ? [curAcct.type(), curAcct.user()] : null,
                 adapData : adapData,
-                accts: accts
+                accts: accts,
+                tpls: tpls,
+                editor: editor
             };
 
             var opts = {encoding: 'utf8', mode: 0600};
             fs.writeFileSync(filePath, JSON.stringify(settings), opts);
+        };
+
+        this.setEditor = function(path){
+            editor = path;
+        };
+
+        this.getTemplateManager = function(){
+            return tplMgr;
+        };
+
+        this.edit = function(filePath, callback){
+            if (!editor)
+            {
+                return callback(new errors.NoEditor());
+            }
+            
+            function setRaw (mode) {
+                process.stdin.setRawMode ? process.stdin.setRawMode(mode) : tty.setRawMode(mode);
+            }
+
+            try{
+                var args  = [filePath];
+                var isVim = /^(vi|vim)$/i.test(path.basename(editor));
+
+                if (isVim)
+                    args.unshift('-c','startinsert');
+
+                if (!fs.existsSync(filePath))
+                {
+                    var fileExt = util.getFileExt(filePath).toLowerCase();
+                    var lang = util.getLang(fileExt);
+                    if (lang < 0) throw new errors.UnknownLang();
+
+                    var r = tplMgr.spawn(lang, filePath);
+                    if (r.lineNum && isVim)
+                        args.unshift('+'+r.lineNum);
+                }
+
+                process.stdin.pause();
+                setRaw(true);
+                var ps = spawn(editor, args, {customFds:[0,1,2]});
+                ps.on('exit', function(code,sig){
+                    setRaw(false);
+                    process.stdin.resume();
+                    callback();
+                }).on('error', function(e){
+                    callback(e);
+                });
+            }
+            catch(e){
+                callback(e);
+            }
         };
 
         this.getAdapterData = function(type){
@@ -68,7 +138,8 @@ module.exports = (function(){
 
         /**
          * Adds a new account, or replaces an existing one.
-         * @return boolean true if acct is added ok.
+         * Replacing the current account is not an error.
+         * @return boolean true if account was replaced; false if added
          */
         this.add = function(acct){
             var idx = findAcct(acct.type(), acct.user());
@@ -84,22 +155,23 @@ module.exports = (function(){
             }
 
             accts.push(acct);
-            return true;
+            return false;
         };
 
         /**
          * Removes an existing account which must not be the current account.
-         * @return boolean true if account is removed.
+         * @exception IsCurrent trying to remove a current account.
+         * @exception NotExist
+         * @return void
          */
         this.remove = function(type, user){
             if (curAcct && curAcct.match(type, user))
-                return false;
+                throw new errors.IsCurrent();
 
             var idx = findAcct(type, user);
-            if (idx < 0) return false;
+            if (idx < 0) throw new errors.NotExist();
 
             accts.splice(idx, 1);
-            return true;
         };
 
         this.getCurrent = function(){
@@ -116,26 +188,26 @@ module.exports = (function(){
 
         /**
          * Sets an account as current.
-         * @return boolean true if account is set as current.
+         * @exception NotExist
+         * @return void
          */
         this.use = function(type, user){
             var idx = findAcct(type, user);
-            if (idx < 0) return false;
+            if (idx < 0) throw new errors.NotExist();
             
             var a = Adapter.create(this, accts[idx]);
-            if (!a) return false;
+            if (!a) throw new errors.NotExist();
 
             curAcct = accts[idx];
             curAdap = a;
-            return true;
         };
 
-        /**
-         * Gets all accounts. Do not modify directly.
-         * @return array of account objects.
-         */
-        this.getAll = function(){
-            return accts;
+        this.get = function(idx){
+            return accts[idx];
+        };
+
+        this.size = function(){
+            return accts.length;
         };
     }
 
