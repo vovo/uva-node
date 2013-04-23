@@ -121,7 +121,7 @@ module.exports = (function(parentCls){
                 .end();            
         };
 
-        this._send = function(probNum, filePath, lang, callback){
+        this._send = function(probNum, filePath, fileExt, callback){
             var req;
             var callback10 = util.createEndCallback(function(html){
                 req.removeListener('error', callback);
@@ -131,7 +131,7 @@ module.exports = (function(parentCls){
                     callback();
             });
 
-            var langVal = cls.getLangVal(lang);
+            var langVal = cls.getLangVal(util.getLang(fileExt.toLowerCase()));
             if (langVal < 0) return callback({message: 'unacceptable programming lang'});
 
             var data = {
@@ -298,15 +298,17 @@ module.exports = (function(parentCls){
         return r;
     };
 
+    /**
+     * @param lang One of LANG_* constants
+     * @return UVA lang value or -1 if unacceptable.
+     */
     cls.getLangVal = function(lang){ 
         switch (lang)
         {
-        case 'c': return 1; 
-        case 'java': return 2; 
-        case 'cpp': return 3; 
-        case 'p':
-        case 'pascal':
-        case 'pas': return 4; 
+        case util.LANG_C: return 1; 
+        case util.LANG_JAVA: return 2; 
+        case util.LANG_CPP: return 3; 
+        case util.LANG_PASCAL: return 4; 
         }
 
         return -1;
