@@ -2,14 +2,67 @@ const http = require('http');
 const qs = require('querystring');
 const crypto = require('crypto');
 const fs = require('fs');
+const path = require('path');
 
 const ATTRIB_PATTERN =
     // group 1: attrib name (allowing namespace)
     // group 2: value including quote chars if any
     /([\w:]+)\s*=\s*("[^"]*"|'[^']*'|\S*)/gi;
 
-    
+const LANG_C      = 1;
+const LANG_JAVA   = 2;
+const LANG_CPP    = 3;
+const LANG_PASCAL = 4;    
+
 (function(obj){
+
+obj.LANG_C = LANG_C;
+obj.LANG_JAVA = LANG_JAVA;
+obj.LANG_CPP = LANG_CPP;
+obj.LANG_PASCAL = LANG_PASCAL;
+
+/**
+ * @param fileExt Lowercase file extension without the dot.
+ * @return LANG_* constant or -1 if unrecognized
+ */
+obj.getLang = function(fileExt){ 
+    switch (fileExt)
+    {
+    case 'c': return LANG_C; 
+    case 'java': return LANG_JAVA;
+    case 'cc':  
+    case 'cpp': return LANG_CPP; 
+    case 'p':
+    case 'pascal':
+    case 'pas': return LANG_PASCAL; 
+    }
+
+    return -1;
+};
+
+obj.getLangName = function(lang){
+    lang = parseInt(lang);
+    switch(lang)
+    {
+    case LANG_C: return 'C';
+    case LANG_JAVA: return 'Java';
+    case LANG_CPP: return 'C++';
+    case LANG_PASCAL: return 'Pascal';
+    }
+
+    return '?';
+};
+
+/**
+ * @return File extension without the dot; empty string if none.
+ */
+obj.getFileExt = function(filePath){
+    var fileExt = path.extname(filePath);
+    if (fileExt)
+        return fileExt.substring(1);
+
+    return '';
+};
 
 obj.createEndCallback = function(callback){
     var buf = '';
