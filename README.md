@@ -8,16 +8,34 @@ Features
 - Remembers your account info and encrypts your passwords.
 - Password-less submissions.
 - Checks most recent submission status.
+- Template Support! *new*
 - Cross-platform: Linux, Mac OS X, Windows or whatever node.js runs on
 
-Sample session:
+Sample session for using templates:
+<pre>
+> tpl add path/to/template.cpp
+
+> tpl show
+lang     | file path
+C++        path/to/template.cpp
+
+> set-editor vim
+
+> edit problem-123.cpp
+
+.... launch vim ....
+
+Edit done
+</pre>
+
+Sample session for submitting code:
 <pre>
 > add uva john.doe my-secret-password
 Account added
 
 > use uva john.doe
 
-> send 123 code.cpp
+> send 123 problem-123.cpp
 Logging in...
 Sending code...
 Sent OK
@@ -25,8 +43,8 @@ Sent OK
 > stat
 Getting status...
 Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time
- 11638387      125           accepted      C++     0.008     519   2013-04-20 13:35:04
- 11629565      125           accepted      C++     0.016     900   2013-04-19 00:16:01
+ 11638387      123           accepted      C++     0.008     519   2013-04-20 13:35:04
+ 11629565      123           accepted      C++     0.016     900   2013-04-19 00:16:01
 ...
 </pre>
 
@@ -64,7 +82,55 @@ Usage
 UVA-NODE is an interactive shell in which you can type commands.
 Commands are of the syntax: `<action> <arg1> <arg2> ...`
 
+The program will auto-detect language based on file name extension in many cases:
+
+| Ext.        | Lang |
+| ---         | ---  |
+| .java       | Java |
+| .cpp / .cc  | C++  |
+| .c          | C    |
+| .pascal / .pas / .p |  Pascal |
+
 The following are possible actions:
+
+tpl
+---
+Syntax: 
+- tpl add {filePath} 
+- tpl remove {lang}
+- tpl show
+
+tpl add {filePath}: 
+- Adds or replaces an existing template. The program will merely store the file path,
+and will *not* copy the template file to another place.
+- Will detect language based on file extension.
+- Put the string `$caret_start$` in the template file at where you want to start typing the code.   
+
+tpl remove {lang}: 
+- Removes the template setting but will *not* delete the template file.
+- {lang} is cpp / c / java / pascal / pas / p.
+
+tpl show: 
+- Shows all template settings.
+
+set-editor
+----------
+Syntax: set-editor {path to editor}
+
+Sets editor command. Usually `vim` or `vi`. Actually any editor will do.
+Try experimenting on your own. Only `vi` / `vim` is tested with.
+
+If the command is relative, it must exist on the $PATH environment variable.
+
+
+edit
+----
+Syntax: edit {srcFilePath}
+
+Creates {srcFilePath} using an existing template if {srcFilePath} does *not* exist,
+and launches the editor.
+
+Otherwise, if {srcFilePath} exists, launch the editor only.
 
 add
 ----
@@ -106,11 +172,7 @@ Sends a code file using the current account.
 {fileName} is relative to the current directory, which
 is where you ran the `node ...` command to start uva-node
 
-The program will auto-detect the language using the file name extension:
-- .java  : Java
-- .cpp   : C++
-- .c     : C
-- .pascal / .pas / .p : Pascal 
+The program will auto-detect the language using the file name extension.
 
 status / stat
 -------------
