@@ -106,6 +106,7 @@ and will *not* copy the template file to another place.
 - Recommended that filePath is absolute, instead of relative, to avoid path issues,
   and make it independent of where you launch the editor.
 - Will detect language based on file extension.
+- The file must be in the UTF-8 or ASCII encoding. If you use pure English, you're fine, don't worry about it :)
 - Put the string `$caret_start$` in the template file at where you want to start typing the code.   
 
 tpl remove {lang}: 
