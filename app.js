@@ -123,6 +123,8 @@ module.exports = (function(){
                     process.stdin.resume();
                     callback();
                 }).on('error', function(e){
+                    setRaw(false);
+                    process.stdin.resume();
                     callback(e);
                 });
             }
