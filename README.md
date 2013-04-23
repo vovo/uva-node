@@ -107,7 +107,8 @@ and will *not* copy the template file to another place.
   and make it independent of where you launch the editor.
 - Will detect language based on file extension.
 - The file must be in the UTF-8 or ASCII encoding. If you use pure English, you're fine, don't worry about it :)
-- Put the string `$caret_start$` in the template file at where you want to start typing the code.   
+- In the template file, put the string `$caret_start$` *in a line of its own* at where you want to start typing the code.   
+The entire line containing `$caret_start$` will be replaced with a blank line.
 
 tpl remove {lang}: 
 - Removes the template setting but will *not* delete the template file.
