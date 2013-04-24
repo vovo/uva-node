@@ -4,11 +4,6 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-const ATTRIB_PATTERN =
-    // group 1: attrib name (allowing namespace)
-    // group 2: value including quote chars if any
-    /([\w:]+)\s*=\s*("[^"]*"|'[^']*'|\S*)/gi;
-
 const LANG_C      = 1;
 const LANG_JAVA   = 2;
 const LANG_CPP    = 3;
@@ -124,6 +119,12 @@ obj.unquote = function(s){
  * decoded.
  */
 obj.parseAttribs = function(html){
+
+    const ATTRIB_PATTERN =
+    // group 1: attrib name (allowing namespace)
+    // group 2: value including quote chars if any
+    /([\w:]+)\s*=\s*("[^"]*"|'[^']*'|\S*)/gi;
+
     var match, pairs = {};
     while (match = ATTRIB_PATTERN.exec(html))
     {
