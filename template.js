@@ -5,11 +5,6 @@ const util = require('./util');
 const CARET_START = /\$caret_start\$/i;
 
 module.exports = (function(){
-
-    // tpl add <fileName>
-    // tpl remove <lang>
-    // tpl show
-
     var app;
     var tpls;
 
@@ -54,33 +49,44 @@ module.exports = (function(){
             }
 
             var opts = {
+                // use default mode (inherit from parent usually)
                 encoding: 'utf8',  
-                mode: 0666,        // all R/W 
                 flag: 'w'          // create if not exist, truncate otherwise
             };
 
             var lineNum = 1;
+            var r = {lineNum: 1};
             var writer = fs.createWriteStream(destFilePath, opts);
-            var lines = contents.split(/\r\n|\n|\r/g);
-            for (var i=0;i < lines.length; i++)
+            var m;
+            var lastIndex = -1;
+
+            // localize this regex since it remembers previous matches
+            const LINE_MATCH = /(.*?)(\r\n?|\n|$)/g;
+
+            // Do this to preserve line ending
+            while(true)
             {
-                var line = lines[i];
-                if (lineNum === 1 && CARET_START.test(line))
+                m = LINE_MATCH.exec(contents);
+                if (!m || LINE_MATCH.lastIndex == lastIndex) break;
+
+                var line = m[1];
+                if (r.lineNum === 1 && CARET_START.test(line))
                 {
-                    lineNum = i+1;
-                    writer.write('', 'ascii');
+                    r.lineNum = lineNum;
                 }
                 else
                 {
                     writer.write(line, 'utf8');
                 }
 
-                writer.write('\n', 'ascii');
+                writer.write(m[2], 'ascii');
+                lineNum++;
+                lastIndex = LINE_MATCH.lastIndex;
             }
 
             writer.end();
 
-            return {lineNum: lineNum};
+            return r;
         };
     }
 
