@@ -94,7 +94,9 @@ module.exports = (function(){
             }
             
             function setRaw (mode) {
-                process.stdin.setRawMode ? process.stdin.setRawMode(mode) : tty.setRawMode(mode);
+                var isRaw = process.stdin.isRaw; 
+                process.stdin.setRawMode(mode);
+                return isRaw;
             }
 
             try{
@@ -104,26 +106,36 @@ module.exports = (function(){
                 if (isVim)
                     args.unshift('-c','startinsert');
 
-                if (!fs.existsSync(filePath))
-                {
-                    var fileExt = util.getFileExt(filePath).toLowerCase();
-                    var lang = util.getLang(fileExt);
-                    if (lang < 0) throw new errors.UnknownLang();
+                var fileExt = util.getFileExt(filePath).toLowerCase();
+                var lang = util.getLang(fileExt);
+                var fileExists = fs.existsSync(filePath);
 
-                    var r = tplMgr.spawn(lang, filePath);
-                    if (r.lineNum && isVim)
-                        args.unshift('+'+r.lineNum);
+                if (!fileExists)
+                {
+                    if (lang >= 0)
+                    {
+                        var r = tplMgr.spawn(lang, filePath);
+                        if (r.lineNum && isVim)
+                            args.unshift('+'+r.lineNum);
+                    }
+                    else
+                    {
+                        // create a blank file
+                        fs.writeFileSync(filePath, '', {encoding:'ascii'});
+                    }
                 }
 
                 process.stdin.pause();
-                setRaw(true);
+
+                // important! must preserve rawMode
+                var oldMode = setRaw(true);
                 var ps = spawn(editor, args, {customFds:[0,1,2]});
                 ps.on('exit', function(code,sig){
-                    setRaw(false);
+                    setRaw(oldMode);
                     process.stdin.resume();
                     callback();
                 }).on('error', function(e){
-                    setRaw(false);
+                    setRaw(oldMode);
                     process.stdin.resume();
                     callback(e);
                 });
