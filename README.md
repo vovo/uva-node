@@ -16,26 +16,25 @@ One-time setup:
 > tpl add path/to/template.cpp 
 
 > set-editor vim
+Editor set
 
 > add uva john.doe my-secret-password
 Account added
 
 > use uva john.doe
-</pre>
+Account set as current
 
-Sample session for using templates:
-<pre>
 > tpl show
 lang     | file path
 C++        path/to/template.cpp
+</pre>
 
+Sample usage:
+<pre>
 > edit problem-123.cpp
 .... spawn the template and launch vim ....
 Edit done
-</pre>
 
-Sample session for submitting code:
-<pre>
 > send 123 problem-123.cpp
 Logging in...
 Sending code...
@@ -117,7 +116,8 @@ always use the latest version of your template without having you to re-add.
   don't worry about it. 
 - In the template file, put the string `$caret_start$` *in a line of its own* at where you want to start typing the code.   
 The entire line containing `$caret_start$` will be replaced with a blank line.
-- Sample template file:
+
+Sample template file:
 <pre>
 #include &lt;stdio.h&gt;
 
