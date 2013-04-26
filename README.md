@@ -11,30 +11,31 @@ Features
 - Template Support! *new*
 - Cross-platform: Linux, Mac OS X, Windows or whatever node.js runs on
 
+One-time setup:
+<pre>
+> tpl add path/to/template.cpp 
+
+> set-editor vim
+
+> add uva john.doe my-secret-password
+Account added
+
+> use uva john.doe
+</pre>
+
 Sample session for using templates:
 <pre>
-> tpl add path/to/template.cpp
-
 > tpl show
 lang     | file path
 C++        path/to/template.cpp
 
-> set-editor vim
-
 > edit problem-123.cpp
-
-.... launch vim ....
-
+.... spawn the template and launch vim ....
 Edit done
 </pre>
 
 Sample session for submitting code:
 <pre>
-> add uva john.doe my-secret-password
-Account added
-
-> use uva john.doe
-
 > send 123 problem-123.cpp
 Logging in...
 Sending code...
@@ -44,7 +45,7 @@ Sent OK
 Getting status...
 Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time
  11638387      123           accepted      C++     0.008     519   2013-04-20 13:35:04
- 11629565      123           accepted      C++     0.016     900   2013-04-19 00:16:01
+ 11629565      125           accepted      C++     0.016     900   2013-04-19 00:16:01
 ...
 </pre>
 
@@ -64,13 +65,14 @@ Running
     or download the source https://github.com/lucastan/uva-node/archive/master.zip
 3.  `node uva-node`
 
-The program will generate a settings file and a random key the first 
-time it is run, and will use the key to encrypt all your account passwords.
-The key is stored at `~/.ssh/uva-node.key`. You don't have to generate 
-an SSH key nor will the program use your SSH key.
+The program will generate a settings file and a random key file the first 
+time it is run. Please do not modify them manually. 
 
-Settings are saved in the JSON format at `~/.uva-node`
-where ~ is your home directory. Please do not modify manually.
+It will use the key to encrypt all your account passwords.
+The key is stored at `~/.ssh/uva-node.key` where ~ is your home directory. 
+You don't have to generate 
+an SSH key nor will the program use your SSH key.
+Settings are saved in the JSON format at `~/.uva-node`. 
 
 To upgrade to the latest version, simply do `git pull` in the uva-node dir!
 
@@ -79,10 +81,11 @@ but only this node.js version will be actively maintained.
 
 Usage
 =====
-UVA-NODE is an interactive shell in which you can type commands.
-Commands are of the syntax: `<action> <arg1> <arg2> ...`
+UVA-NODE is an interactive shell (REPL) in which you can type commands 
+of the syntax: `<action> <arg1> <arg2> ...`
 
-The program will auto-detect language based on file name extension in many cases:
+For your convenience, 
+the program will in many cases auto-detect the language based on the file name extension:
 
 | Ext.        | Lang |
 | ---         | ---  |
@@ -100,18 +103,33 @@ Syntax:
 - tpl remove {lang}
 - tpl show
 
+All template settings are global across your accounts, but still specific to
+the OS user (computer user).
+
 tpl add {filePath}: 
-- Adds or replaces an existing template. The program will merely store the file path,
-and will *not* copy the template file to another place.
-- Recommended that filePath is absolute, instead of relative, to avoid path issues,
-  and make it independent of where you launch the editor.
+- Adds or replaces an existing template path. The program will merely store the file path,
+and will *not* copy the template file to another place. This behavior ensures the program 
+always use the latest version of your template without having you to re-add.
+- It is recommended that filePath is absolute, instead of relative, to avoid path issues,
+  and make it independent of where you launch uva-node.
 - Will detect language based on file extension.
-- The file must be in the UTF-8 or ASCII encoding. If you use pure English, you're fine, don't worry about it :)
+- The file must be in the UTF-8 or ASCII encoding. If you have no clue what it is,
+  don't worry about it. 
 - In the template file, put the string `$caret_start$` *in a line of its own* at where you want to start typing the code.   
 The entire line containing `$caret_start$` will be replaced with a blank line.
+- Sample template file:
+<pre>
+#include &lt;stdio.h&gt;
+
+int main()
+{
+    $caret_start$
+    return 0;
+}
+</pre>
 
 tpl remove {lang}: 
-- Removes the template setting but will *not* delete the template file.
+- Removes the template path but will *not* delete the template file.
 - {lang} is cpp / c / java / pascal / pas / p.
 
 tpl show: 
@@ -124,17 +142,30 @@ Syntax: set-editor {path to editor}
 Sets editor command. Usually `vim` or `vi`. Actually any editor will do.
 Try experimenting on your own. Only `vi` / `vim` is tested with.
 
-If the command is relative, it must exist on the $PATH environment variable.
+If the command is relative, it must exist in one of the paths specified by the $PATH environment variable.
 
+<strong>Windows users:</strong>
+- If you are using Git bash shell, please use a path such as `C:\progra~2\Git\share\vim\vim73\vim.exe`
+  You might need to swap `progra~2` with `progra~1`. Sorry, because the program currently doesn't
+  accept spaces in the arguments, you would have to use 8.3 MSDOS-styled file names.
+  This would be improved in the future.
+
+- If you are using MinGW, you could use a path such as `C:\MinGW\msys\1.0\bin\vim.exe`
+
+- If you do not want to use absolute paths, you can simply use `vim.exe` but please
+  ensure it is in your PATH environment variable.
+
+- It is also possible to use a GUI-based editor such as gvim
 
 edit
 ----
 Syntax: edit {srcFilePath}
 
-Creates {srcFilePath} using an existing template if {srcFilePath} does *not* exist,
-and launches the editor.
+If {srcFilePath} does *not* exist, and there is a template configured for
+the language, the program will spawn the template and launch the editor.
+If there is no template, a blank file will be created instead.
 
-Otherwise, if {srcFilePath} exists, launch the editor only.
+Otherwise, if {srcFilePath} exists, the program will launch the editor only.
 
 add
 ----
