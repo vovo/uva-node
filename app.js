@@ -101,7 +101,7 @@ module.exports = (function(){
 
             try{
                 var args  = [filePath];
-                var isVim = /^(vi|vim)$/i.test(path.basename(editor));
+                var isVim = /^(vi|vim)(\.exe)?$/i.test(path.basename(editor));
 
                 if (isVim)
                     args.unshift('-c','startinsert');
