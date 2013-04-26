@@ -1,0 +1,29 @@
+- cache submissions and fetch only the latest
+
+- create .uva-node dir in ~
+  store account-specific settings in a separate file
+  ~/.uva-node/uva-lucastan
+  ~/.uva-node/main
+  ~/.uva-node/uva
+
+- login only once.
+  if send fails due to not login, then auto-login and retry
+
+- allow gzip compression when fetching the data ... see node.js docs on how to decompress
+
+- util.fetch to combine both util.createReq and util.createEndCallback
+ - create webUtil
+ - auto remove error listener
+
+- use underscore.js to reduce code size
+
+- add version command to check version of uva-node
+
+- SEND command auto detect prob# from filename
+  print out auto-detected language and prob#
+
+- allow running arbitrary shell commands
+
+- test command to compile and run tests
+  - output results and timing
+
