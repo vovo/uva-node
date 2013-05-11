@@ -8,8 +8,9 @@ Features
 - Remembers your account info and encrypts your passwords.
 - Password-less submissions.
 - Checks most recent submission status.
-- Template Support! *new*
+- Template Support! 
 - File name completion and problem number detection *new*
+- Non-interactive mode *new*
 - Cross-platform: Linux, Mac OS X, Windows or whatever node.js runs on
 
 One-time setup:
@@ -49,6 +50,17 @@ Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time
  11638387      123           accepted      C++     0.008     519   2013-04-20 13:35:04
  11629565      125           accepted      C++     0.016     900   2013-04-19 00:16:01
 ...
+</pre>
+
+Non-interactive usage:
+<pre>
+lucastan$ node uva-node status
+Getting status...
+Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time
+ 11638387      123           accepted      C++     0.008     519   2013-04-20 13:35:04
+ 11629565      125           accepted      C++     0.016     900   2013-04-19 00:16:01
+
+lucastan$
 </pre>
 
 Requirements
