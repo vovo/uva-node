@@ -175,7 +175,7 @@ function executeLine(line, doneFn)
     case 'exit':
     case 'quit':
         doneFn(true);
-        break;
+        return;
 
     case 'set-editor':
         if (!checkToks(1, 'set-editor <editor path>')) break;
