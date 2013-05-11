@@ -1,4 +1,4 @@
-- cache submissions and fetch only the latest
+- cache submission status and fetch only the latest
 
 - create .uva-node dir in ~
   store account-specific settings in a separate file
@@ -15,15 +15,15 @@
  - create webUtil
  - auto remove error listener
 
-- use underscore.js to reduce code size
-
 - add version command to check version of uva-node
-
-- SEND command auto detect prob# from filename
-  print out auto-detected language and prob#
+- add help command to show commands (needs a structure to store commands)
 
 - allow running arbitrary shell commands
 
 - test command to compile and run tests
   - output results and timing
 
+- test 123 
+    - will do <extension completion>
+    - will compile
+    - if compile ok, then run 123-?.in or *.in
