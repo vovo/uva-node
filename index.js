@@ -178,8 +178,55 @@ function onLine(line)
     case 'send':
         var curAdap = getCurrentAdapter();
         if (!curAdap) break;
-        if (!checkToks(2, 'send <prob#> <fileName>')) break;
 
+        var probNum, filePath;
+
+        if (toks.length == 2)
+        {
+            var input = toks[1]; // can be prob# or filePath
+            if (fs.existsSync(input))
+            {
+                probNum = curAdap.inferProbNum(input);
+                filePath = input;
+                if (!probNum)
+                {
+                    console.log('file "%s" exists, but cannot infer problem number.', input);
+                    break;
+                }
+            }
+            else
+            {
+                var files = curAdap.findFileNames(input);
+                if (files.length == 0)
+                {
+                    console.log('Cannot find source files in current directory for problem: %s', input);
+                    break;
+                }
+
+                if (files.length > 1)
+                {
+                    console.log('Multiple source files found: "%s", "%s", ...', files[0], files[1]);
+                    break;
+                }
+
+                filePath = files[0];
+                probNum = input;
+            }
+
+            console.log('Inferred Problem #: %s', probNum);
+            console.log('       Source file: %s', filePath);
+        }
+        else if (toks.length == 3)
+        {
+            probNum = toks[1];
+            filePath = toks[2];
+        }
+        else 
+        {
+            checkToks(2, 'send <prob#> <fileName/Path>');
+            break;
+        }
+break;
         try
         {
             console.log('Logging in...');
@@ -192,7 +239,7 @@ function onLine(line)
                 }
 
                 console.log('Sending code...');
-                curAdap.send(toks[1], toks[2], function(e){
+                curAdap.send(probNum, filePath, function(e){
                     if (e)
                         console.log('send failed: '+e.message);
                     else

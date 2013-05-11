@@ -121,6 +121,43 @@ module.exports = (function(parentCls){
                 .end();            
         };
 
+        /**
+         * Finds existing source code files which names contain the 
+         * problem number. 
+         * @return array of file names which fit the criteria; empty if not found.
+         */
+        this.findFileNames = function(probNum){
+            var found = [];
+            var all = fs.readdirSync('.'); 
+            var probNumStr = probNum+'';
+
+            for (var i=0;i < all.length; i++)
+            {
+                var cur = all[i];
+                var ext = util.getFileExt(cur).toLowerCase();
+                var lang = util.getLang(ext);
+
+                if (lang >= 0)
+                {
+                    var m = cur.match(/0*(\d+)/);
+                    if (m && m[1] == probNumStr)
+                        found.push(cur);        
+                }
+            }
+
+            return found;
+        };
+
+        /**
+         * Infers the prob num from a file path
+         * @return undefined if not found; else the problem num as a string.
+         */
+        this.inferProbNum = function(filePath){
+            var fileName = path.basename(filePath);
+            var m = fileName.match(/0*(\d+)/);
+            if (m) return m[1];
+        };
+
         this._send = function(probNum, filePath, fileExt, callback){
             var req;
             var callback10 = util.createEndCallback(function(html){
