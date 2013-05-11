@@ -22,12 +22,43 @@ else
     console.log('A new one will be created after exiting the program');
 }
 
+var args = process.argv.splice(2);
+var interactive = args.length === 0;
+
+if (! interactive)
+{
+    executeLine(args.join(' '), function(){
+        saveSetting();
+        process.exit(0);
+    });
+    return;
+}
+
 var rl = readline.createInterface(process.stdin, process.stdout);
 
-function prompt()
-{    
-    console.log();
-    rl.prompt();
+rl.on('line', function(line){
+    executeLine(line, function (quitting){    
+        if (quitting)
+        {
+            saveSetting();
+            rl.close();
+            return;
+        }
+
+        console.log();
+        rl.prompt();
+    });
+})
+.on('close', function() {
+    console.log('Have a great day!');
+    process.exit(0);
+});
+rl.setPrompt('> ');
+rl.prompt();
+
+function saveSetting()
+{
+    app.save(SETTING_PATH);
 }
 
 function printStatus(subs)
@@ -70,7 +101,7 @@ function printError(e)
     console.log('Error: ' + (e.message || e));
 }
 
-function onLine(line) 
+function executeLine(line, doneFn) 
 {
     var toks = line.trim().split(/\s+/g);
     var action = toks[0].toLowerCase();
@@ -143,8 +174,7 @@ function onLine(line)
     {
     case 'exit':
     case 'quit':
-        app.save(SETTING_PATH);
-        rl.close();
+        doneFn(true);
         break;
 
     case 'set-editor':
@@ -160,7 +190,7 @@ function onLine(line)
                 console.log('Cannot edit: '+e.message);
             else
                 console.log('Edit done');
-            prompt();
+            doneFn();
         });
         return;
 
@@ -234,7 +264,7 @@ function onLine(line)
                 if (e)
                 {
                     console.log('Login error: '+e.message);
-                    prompt();
+                    doneFn();
                     return;
                 }
 
@@ -244,7 +274,7 @@ function onLine(line)
                         console.log('send failed: '+e.message);
                     else
                         console.log('Send ok');
-                    prompt();
+                    doneFn();
                 });    
             });
 
@@ -356,7 +386,7 @@ function onLine(line)
                 console.log('Status error: '+e.message);
             else
                 printStatus(subs);
-            prompt();
+            doneFn();
         });
 
         return;
@@ -366,14 +396,6 @@ function onLine(line)
         break;
     }
 
-    prompt();
+    doneFn();
 }
-
-rl.on('line', onLine)
-  .on('close', function() {
-    console.log('Have a great day!');
-    process.exit(0);
-});
-rl.setPrompt('> ');
-rl.prompt();
 
