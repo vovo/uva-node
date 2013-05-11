@@ -29,7 +29,8 @@ module.exports = (function(){
         var tplMgr = new TemplateManager(this, tpls);
 
         var editor;
-
+        var editorOpts = {};
+        
         function findAcct(type, user)
         {
             for (var i=0; i < accts.length; i++)
@@ -51,7 +52,7 @@ module.exports = (function(){
                 accts[i] = new Account(accts[i]);
             }
 
-            editor = settings.editor;
+            this.setEditor(settings.editor);
             tplMgr = new TemplateManager(this, tpls = settings.tpls || {});
 
             curAcct = null;
@@ -79,8 +80,13 @@ module.exports = (function(){
             fs.writeFileSync(filePath, JSON.stringify(settings), opts);
         };
 
-        this.setEditor = function(path){
-            editor = path;
+        this.setEditor = function(editorPath){
+            editor = editorPath;
+            var editorBaseName = path.basename(editor);
+            editorOpts = {
+                isVim   : /^(vi|vim)(\.exe)?$/i.test(editorBaseName),
+                isEmacs : /^emacs/i.test(editorBaseName)  
+            };
         };
 
         this.getTemplateManager = function(){
@@ -101,11 +107,6 @@ module.exports = (function(){
 
             try{
                 var args  = [filePath];
-                var isVim = /^(vi|vim)(\.exe)?$/i.test(path.basename(editor));
-
-                if (isVim)
-                    args.unshift('-c','startinsert');
-
                 var fileExt = util.getFileExt(filePath).toLowerCase();
                 var lang = util.getLang(fileExt);
                 var fileExists = fs.existsSync(filePath);
@@ -115,8 +116,11 @@ module.exports = (function(){
                     if (lang >= 0)
                     {
                         var r = tplMgr.spawn(lang, filePath);
-                        if (r.lineNum && isVim)
-                            args.unshift('+'+r.lineNum);
+                        if (r.lineNum > 0)
+                            if (editorOpts.isVim)
+                                args.unshift('+call cursor('+r.lineNum+','+r.colNum+')');
+                            else if (editorOpts.isEmacs)
+                                args.unshift('+'+r.lineNum+':'+r.colNum);
                     }
                     else
                     {
@@ -125,6 +129,11 @@ module.exports = (function(){
                     }
                 }
 
+                // start vim in insert mode only after we set the cursor
+                // otherwise the cursor will be 1 column before the desired position
+                if (editorOpts.isVim)
+                    args.unshift('-c','startinsert');
+                
                 process.stdin.pause();
 
                 // important! must preserve rawMode

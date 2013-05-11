@@ -55,7 +55,7 @@ module.exports = (function(){
             };
 
             var lineNum = 1;
-            var r = {lineNum: 1};
+            var r = {lineNum: -1, colNum: 1};
             var writer = fs.createWriteStream(destFilePath, opts);
             var m;
             var lastIndex = -1;
@@ -70,15 +70,19 @@ module.exports = (function(){
                 if (!m || LINE_MATCH.lastIndex == lastIndex) break;
 
                 var line = m[1];
-                if (r.lineNum === 1 && CARET_START.test(line))
+                var m2;
+                if (r.lineNum < 0 && (m2 = CARET_START.exec(line)))
                 {
                     r.lineNum = lineNum;
+                    r.colNum = m2.index+1;
+                    writer.write(line.substring(0, m2.index), 'utf8');
                 }
                 else
                 {
                     writer.write(line, 'utf8');
                 }
 
+                // write the line ending
                 writer.write(m[2], 'ascii');
                 lineNum++;
                 lastIndex = LINE_MATCH.lastIndex;
