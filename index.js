@@ -226,7 +226,7 @@ function onLine(line)
             checkToks(2, 'send <prob#> <fileName/Path>');
             break;
         }
-break;
+        
         try
         {
             console.log('Logging in...');
