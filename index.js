@@ -22,17 +22,19 @@ else
     console.log('A new one will be created after exiting the program');
 }
 
-var args = process.argv.splice(2);
-var interactive = args.length === 0;
+(function(){
+    var args = process.argv.splice(2);
+    var interactive = args.length === 0;
 
-if (! interactive)
-{
-    executeLine(args.join(' '), function(){
-        saveSetting();
-        process.exit(0);
-    });
-    return;
-}
+    if (! interactive)
+    {
+        executeLine(args.join(' '), function(){
+            saveSetting();
+            process.exit(0);
+        });
+        return;
+    }
+})();
 
 var rl = readline.createInterface(process.stdin, process.stdout);
 
