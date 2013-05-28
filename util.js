@@ -154,6 +154,9 @@ obj.htmlDecodeSimple = function(s){
  * @param callback response callback function
  */
 obj.createReq = function(method, host, path, callback){
+    // encodeURI leaves the path components alone
+    path = encodeURI(path);
+
     var options = {
         hostname: host,
         path: path,
@@ -164,8 +167,10 @@ obj.createReq = function(method, host, path, callback){
             'Referer': 'http://'+host+path,
             'Accept-Charset': 'utf-8,ISO-8859-1',
 
-            // Use chunked so we don't have to send content-length
-            'Transfer-Encoding': 'chunked',
+            // NOTE: chunked is implied if content-length is missing, 
+            // explicitly putting it will confuse node.js which will leave
+            // the connection dangling
+            //'Transfer-Encoding': 'chunked',
             
             // no gzip :(
             //'Accept-Encoding': 'gzip,deflate',
