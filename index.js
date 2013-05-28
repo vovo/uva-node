@@ -79,7 +79,7 @@ function printStatus(subs)
         var rank = sub[6];
 
         date.setTime(time);
-        console.log(sprintf("%9d   %6d   %16s   %6s   %3d.%03d   %5s   %4d-%02d-%02d %02d:%02d:%02d", 
+        console.log(sprintf("%9d   %6d   %26s   %6s   %3d.%03d   %5s   %4d-%02d-%02d %02d:%02d:%02d", 
             subId, probId, verdict,
             lang, Math.floor(runtime/1000), runtime%1000,
             rank < 0 ? '-' : rank > 9999 ? '>9999' : rank,

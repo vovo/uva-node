@@ -1,3 +1,4 @@
+const colors = require('colors');
 const fs = require('fs');
 const path = require('path');
 const util = require('./util');
@@ -353,18 +354,18 @@ module.exports = (function(parentCls){
     {
         switch(ver)
         {
-        case 10: return "Subm Error";
-        case 15: return "Can't queue";
-        case 20: return "In queue";
-        case 30: return "Compile Err";
-        case 35: return "Restricted func";
-        case 40: return "Runtime Err";
-        case 45: return "output limit";
-        case 50: return "time limit";
-        case 60: return "mem limit";
-        case 70: return "wrong ans";
-        case 80: return "presentation";
-        case 90: return "accepted";
+        case 10: return "subm error".red;
+        case 15: return "can't queue".red;
+        case 20: return "in queue".yellow;
+        case 30: return "compile err".yellow;
+        case 35: return "restricted func".yellow;
+        case 40: return "runtime err".cyan;
+        case 45: return "output limit".yellow;
+        case 50: return "time limit".blue;
+        case 60: return "mem limit".yellow;
+        case 70: return "wrong ans".red;
+        case 80: return "presentation".yellow;
+        case 90: return "accepted".green;
         }
 
         return "?";
