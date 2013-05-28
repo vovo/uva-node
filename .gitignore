@@ -3,10 +3,6 @@
 *.log
 *.sqlite?
 
-### dependencies
-
-node_modules/
-
 ### Compiled binaries
 
 bin/*
