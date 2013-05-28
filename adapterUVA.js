@@ -200,8 +200,6 @@ module.exports = (function(parentCls){
             {
                 var obj = JSON.parse(buf);
                 var subs = obj.subs; 
-                if (typeof(subs) === 'string')
-                    subs = JSON.parse(subs);
                 
                 // latest at 0th elem.
                 subs.sort(function(a,b){return b[0] - a[0];});
@@ -266,7 +264,7 @@ module.exports = (function(parentCls){
                     util.createReq(
                         'GET', 
                         UHUNT_HOST, 
-                        '/api/subs/'+userId, 
+                        '/api/subs-user/'+userId, 
                         callback10).on('error', callback).end();
                 });
             }
