@@ -66,6 +66,10 @@ function printStatus(subs)
     console.log("Sub Id    | Prob # |      Verdict     |  Lang  | Runtime |  Rank |      Sub Time");
     //           123456789---123456---1234567890123456---123456---1234567---12345---yyyy-mm-dd hh:mm:ss
 
+    var hasColors = process.stdout.isTTY;
+    var formatStr = "%9d   %6d   %"+(hasColors ? 26 : 16)+"s   %6s   %3d.%03d   %5s   %4d-%02d-%02d %02d:%02d:%02d"; 
+    var verdictKey = hasColors ? 'coloredLabel' : 'label';
+
     var date = new Date();
     for (var i = 0; i < subs.length;i++)
     {
@@ -79,8 +83,8 @@ function printStatus(subs)
         var rank = sub[6];
 
         date.setTime(time);
-        console.log(sprintf("%9d   %6d   %26s   %6s   %3d.%03d   %5s   %4d-%02d-%02d %02d:%02d:%02d", 
-            subId, probId, verdict,
+        console.log(sprintf(formatStr,
+            subId, probId, verdict[verdictKey],
             lang, Math.floor(runtime/1000), runtime%1000,
             rank < 0 ? '-' : rank > 9999 ? '>9999' : rank,
             date.getFullYear(), date.getMonth()+1, date.getDate(),

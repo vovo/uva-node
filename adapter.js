@@ -1,3 +1,4 @@
+const colors = require('colors');
 const fs = require('fs');
 const path = require('path');
 const util = require('./util');
@@ -39,6 +40,28 @@ module.exports = (function(){
         if (clsFn) return new clsFn(app, acct);
         return null;
     };
+
+    const STATUSES = {
+        STATUS_ERROR         : {label: "subm err",      color: "red"},
+        STATUS_QUEUE_ERROR   : {label: "can't queue",   color: "red"}, 
+        STATUS_IN_QUEUE      : {label: "in queue",      color: "yellow"},
+        STATUS_COMPILE_ERROR : {label: "compile err",   color: "yellow"},
+        STATUS_RESTRICTED_FN : {label: "restricted func",   color: "yellow"},
+        STATUS_RUNTIME_ERROR : {label: "runtime err",   color: "cyan"},
+        STATUS_OUTPUT_LIMIT  : {label: "output limit",  color: "yellow"},
+        STATUS_TIME_LIMIT    : {label: "time limit",    color: "blue"},
+        STATUS_MEM_LIMIT     : {label: "mem limit",     color: "yellow"},
+        STATUS_WRONG_ANS     : {label: "wrong ans",     color: "red"},
+        STATUS_PRESENTATION  : {label: "presentation",  color: "yellow"},
+        STATUS_ACCEPTED      : {label: "accepted",      color: "green"}
+    };
+
+    for (var key in STATUSES)
+    {
+        var status = STATUSES[key];
+        status.coloredLabel = status.label[status.color];
+        cls[key] = status;
+    }
 
     return cls;
 })();
