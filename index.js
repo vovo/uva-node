@@ -19,8 +19,10 @@ if (fs.existsSync(SETTING_PATH))
 else
 {
     console.log('Setting file not found: %s', SETTING_PATH);
-    console.log('A new one will be created after exiting the program');
+    console.log('A new one will be auto-created after exiting the program');
 }
+
+process.on('exit', saveSetting);
 
 var args = process.argv.splice(2);
 var interactive = args.length === 0;
@@ -28,7 +30,6 @@ var interactive = args.length === 0;
 if (! interactive)
 {
     executeLine(args.join(' '), function(){
-        saveSetting();
         process.exit(0);
     });
     return;
@@ -40,7 +41,6 @@ rl.on('line', function(line){
     executeLine(line, function (quitting){    
         if (quitting)
         {
-            saveSetting();
             rl.close();
             return;
         }
