@@ -5,12 +5,13 @@ and check your submissions.
 
 Features
 ========
+- **new** Opens questions in browser!
 - Remembers your account info and encrypts your passwords.
 - Password-less submissions.
 - Checks most recent submission status.
 - Template Support! 
-- File name completion and problem number detection *new*
-- Non-interactive mode *new*
+- File name completion and problem number detection 
+- Non-interactive mode 
 - Cross-platform: Linux, Mac OS X, Windows or whatever node.js runs on
 
 One-time setup:
@@ -29,10 +30,16 @@ Account set as current
 > tpl show
 lang     | file path
 C++        path/to/template.cpp
+
+> set-browser "path to browser"
+Browser set
 </pre>
 
 Sample usage:
 <pre>
+> view 123
+... opens browser to show problem 123 ...
+
 > edit 123.cpp
 .... spawn the template and launch vim ....
 Edit done
@@ -159,11 +166,10 @@ Try experimenting on your own. Only `vi` / `vim` is tested with.
 
 If the command is relative, it must exist in one of the paths specified by the $PATH environment variable.
 
+If the path contains spaces, please surround with quotes like this `"/path/Program 123"`
+
 <strong>Windows users:</strong>
-- If you are using Git bash shell, please use a path such as `C:\progra~2\Git\share\vim\vim73\vim.exe`
-  You might need to swap `progra~2` with `progra~1`. Sorry, because the program currently doesn't
-  accept spaces in the arguments, you would have to use 8.3 MSDOS-styled file names.
-  This would be improved in the future.
+- If you are using Git bash shell, you can use something like `"C:\program files\Git\share\vim\vim73\vim.exe"`.
 
 - If you are using MinGW, you could use a path such as `C:\MinGW\msys\1.0\bin\vim.exe`
 
@@ -241,6 +247,31 @@ Syntax: status/stat {count}
 
 Prints out the latest {count} submissions for the current account.
 {count} defaults to 10 if omitted.
+
+set-browser
+-----------
+Syntax: set-browser {path} [{arg1} {arg2} ...]
+
+Sets the command for opening the browser to view a question. Args are optional.
+
+If the path or args contains spaces, please surround with quotes.
+
+**Mac OS users**:
+
+* You may want to use the "open" tool which will open in your default browser.
+For example, `set-browser open`.
+
+get-browser
+-----------
+Syntax: get-browser 
+
+Prints out the browser command including args.
+
+view
+----
+Syntax: view {prob #}
+
+Opens the problem webpage in the browser.
 
 quit / exit
 -----------
