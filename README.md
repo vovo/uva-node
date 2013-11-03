@@ -105,6 +105,12 @@ Usage
 UVA-NODE is an interactive shell (REPL) in which you can type commands 
 of the syntax: `<action> <arg1> <arg2> ...`
 
+Each `arg` can be surrounded by quotes if there are spaces in it.
+For example, `"/path/with spaces/"` or `'/path/with spaces/'`. You can use either
+double or single quote, but must be matching.
+
+Quotes cannot be used for the `add` action as your password might contain quotes.
+
 For your convenience, 
 the program will in many cases auto-detect the language based on the file name extension:
 
