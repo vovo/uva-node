@@ -29,6 +29,7 @@ module.exports = (function(){
         var tplMgr = new TemplateManager(this, tpls);
 
         var editor;
+        var browserOpts = {};
         var editorOpts = {};
         
         function findAcct(type, user)
@@ -46,13 +47,16 @@ module.exports = (function(){
             var settings = JSON.parse(fs.readFileSync(filePath, {encoding: 'utf8'}));
             adapData = settings.adapData;
             accts = settings.accts;
-        
+            browserOpts = settings.browserOpts || {};
+            settings.browserOpts = browserOpts;
+
             for (var i=0; i < accts.length; i++)
             {
                 accts[i] = new Account(accts[i]);
             }
 
             this.setEditor(settings.editor);
+            this.setBrowser(browserOpts.path, browserOpts.args);
             tplMgr = new TemplateManager(this, tpls = settings.tpls || {});
 
             curAcct = null;
@@ -73,7 +77,8 @@ module.exports = (function(){
                 adapData : adapData,
                 accts: accts,
                 tpls: tpls,
-                editor: editor
+                editor: editor,
+                browserOpts: browserOpts
             };
 
             var opts = {encoding: 'utf8', mode: 0600};
@@ -81,7 +86,7 @@ module.exports = (function(){
         };
 
         this.setEditor = function(editorPath){
-            editor = editorPath;
+            editor = editorPath || '';
             var editorBaseName = path.basename(editor);
             editorOpts = {
                 isVim   : /^(vi|vim)(\.exe)?$/i.test(editorBaseName),
@@ -231,6 +236,28 @@ module.exports = (function(){
 
         this.size = function(){
             return accts.length;
+        };
+
+        this.setBrowser = function(path, args){
+            browserOpts.path = path || '';
+            browserOpts.args = args || [];
+        };
+
+        this.getBrowser = function(){
+            return browserOpts;
+        };
+
+        this.openBrowser = function(url){
+            if (!browserOpts.path)
+            {
+                throw new errors.NoBrowser();
+            }
+            
+            // shortcut to quickly clone args
+            var newArgs = JSON.parse(JSON.stringify(browserOpts.args));
+            newArgs.unshift(url);
+
+            var ps = spawn(browserOpts.path, newArgs, {customFds:[0,1,2]});
         };
     }
 

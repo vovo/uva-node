@@ -34,5 +34,6 @@ module.exports = {
     IsCurrent: makeError('IsCurrent Error', 'Account is current'),
     NotExist: makeError('NotExist Error', 'No such account'),
     NoEditor: makeError('NoEditor Error', 'No editor configured'),
+    NoBrowser: makeError('NoBrowser Error', 'No browser configured'),
     UnknownLang: makeError('UnknownLang Error', 'unknown language')
 };

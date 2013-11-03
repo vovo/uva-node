@@ -181,6 +181,54 @@ function executeLine(line, doneFn)
         doneFn(true);
         return;
 
+    case 'view':
+        var curAdap = getCurrentAdapter();
+        if (!curAdap) break;
+        if (!checkToks(1, 'view <prob #>')) break;
+        
+        curAdap.getProblemURL(toks[1], function(e, url){
+            if (url)
+            {
+                try 
+                {
+                    app.openBrowser(url);
+                }
+                catch (e)
+                {
+                    printError(e);
+                }
+            }
+            else
+                console.log('Problem not found'); 
+            
+            doneFn();
+        });
+        
+        return;
+
+    case 'set-browser':
+        if (toks.length < 2)
+        {
+            console.log('Syntax: set-browser <path> [<arg1> <arg2> ...]');
+            break;
+        }
+
+        app.setBrowser(toks[1], toks.slice(2));
+        console.log('Browser set');
+        break;
+
+    case 'get-browser':
+        var opts = app.getBrowser();
+        process.stdout.write('Command: '+opts.path+' <url>');
+
+        for (var i=0;i<opts.args.length;i++)
+        {
+            process.stdout.write(' ');
+            process.stdout.write(opts.args[i]);
+        }
+        console.log();
+        break;
+
     case 'set-editor':
         if (!checkToks(1, 'set-editor <editor path>')) break;
         app.setEditor(toks[1]);

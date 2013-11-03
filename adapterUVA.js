@@ -6,6 +6,7 @@ const Adapter = require('./adapter');
 const UVA_HOST = "uva.onlinejudge.org";
 const SUBMIT_PAGE_PATH = "/index.php?option=com_onlinejudge&Itemid=25";
 const SUBMIT_PATH = "/index.php?option=com_onlinejudge&Itemid=25&page=save_submission";
+const PROBLEM_PATH = "/index.php?option=com_onlinejudge&Itemid=8&category=24&page=show_problem&problem=";
 
 const UHUNT_HOST = 'uhunt.felix-halim.net';
 
@@ -51,7 +52,7 @@ module.exports = (function(parentCls){
         function fetchProbs(callback)
         {
             var req;
-            adapData.probs ? 
+            adapData.probs && adapData.mapNum ? 
                 callback(null, adapData.probs) :
                 (req = util.createReq(
                     'GET',
@@ -69,12 +70,17 @@ module.exports = (function(parentCls){
                             return callback(e);
                         }
 
-                        var map = {}; // maps prob ID to array index
+                        var map    = {}; // maps prob ID to array index
+                        var mapNum = {}; // maps prob # to array index
                         for (var i=0;i < p.length; i++)
                         {
-                            map[p[i][0].toString()] = i; 
+                            var cur = p[i];
+                            map   [cur[0].toString()] = i; // prob ID
+                            mapNum[cur[1].toString()] = i; // prob #
                         }
-                        adapData.map = map;
+
+                        adapData.map    = map;
+                        adapData.mapNum = mapNum; 
                         callback(null, adapData.probs = p);
                     })
                 )).on('error', callback)
@@ -270,6 +276,20 @@ module.exports = (function(parentCls){
             }
 
             fetchProbs(callback05);
+        };
+
+        this.getProblemURL = function(probNum, callback){
+            fetchProbs(function(e, probs){
+                var theProb = probs[adapData.mapNum[probNum+'']];
+                if (theProb)
+                {
+                    var probId = theProb[0];
+                    callback(null, 'http://'+UVA_HOST+PROBLEM_PATH + probId);
+                    return;
+                }
+
+                callback(null,null);
+            });
         };
     }
 
