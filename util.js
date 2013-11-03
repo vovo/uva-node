@@ -3,6 +3,7 @@ const qs = require('querystring');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const errors = require('./errors');
 
 const LANG_C      = 1;
 const LANG_JAVA   = 2;
@@ -300,5 +301,129 @@ obj.getCookies = function(inMsg){
 
     return z;
 };
+
+function skipWhitespace(s, startIdx)
+{
+    for (var i = startIdx; i < s.length; i++)
+    {
+        var cur = s.charAt(i);
+
+        if (cur !== ' ' && cur !== "\t")
+            return i;
+    }
+
+    return -1;
+}
+
+obj.parseArgs = function(s){
+    var startQuote = null;
+    var args = [];
+    var curToken = '';
+
+    var i = skipWhitespace(s, 0);
+    if (i < 0) return args;
+
+    for (; i < s.length; )
+    {
+        var cur = s.charAt(i);
+
+        // inside a quoted arg?
+        if (startQuote)
+        {
+            if (cur === startQuote)
+            {
+                args.push(curToken.trim());
+                curToken = '';
+                startQuote = null;
+                i = skipWhitespace(s, i+1);
+                if (i < 0) return args;
+            }
+            else 
+            {
+                curToken += cur;
+                i++;
+            }
+        }
+        else 
+        {
+            if (cur == '"' || cur == "'")
+            {
+                curToken = curToken.trim();
+                
+                if (curToken !== '')
+                {
+                    args.push(curToken);
+                    curToken = '';
+                }  
+
+                startQuote = cur;
+                i++;
+            }
+            else if (cur == ' ' || cur == "\t")
+            {
+                args.push(curToken.trim());
+                curToken = '';
+                i = skipWhitespace(s, i+1);
+                if (i < 0) return args;        
+            }
+            else 
+            {
+                curToken += cur;
+                i++;
+            }
+        }
+    }
+
+    if (startQuote)
+        throw new errors.UnmatchedQuote();
+
+    if (curToken !== '')
+        args.push(curToken.trim());
+
+    return args;
+};
+
+/*
+function check(s, args){
+    var args2 = obj.parseArgs(s);
+    if (args2.length != args.length)
+    {
+        console.log('Failed: '+s);
+        return;
+    }
+
+    for (var i=0; i < args2.length ;i++)
+    {
+        if (args2[i] != args[i])
+        {
+            console.log('Failed: '+s);
+            return;
+        }
+    }
+}
+
+check("", []);
+check(" ", []);
+check("  ", []);
+check("a", ['a']);
+check(" a", ['a']);
+check("a ", ['a']);
+check(" a ", ['a']);
+check("  a  ", ['a']);
+check("'hello'", ['hello']);
+check(" 'hello'", ['hello']);
+check("'hello' ", ['hello']);
+check(" 'hello' ", ['hello']);
+check("  'hello world'  ", ['hello world']);
+check("'hello'abc", ['hello','abc']);
+check("'hello' abc", ['hello','abc']);
+check("'hello' abc ", ['hello','abc']);
+check("'hello world' abc", ['hello world','abc']);
+check("'hello' 'hello there'", ['hello','hello there']);
+check("hello 'hello there'", ['hello','hello there']);
+check("'hello' \"\" 'hello there'", ['hello','','hello there']);
+check("'hello'\"\"'hello there'", ['hello','','hello there']);
+console.log('ok');
+*/
 
 })(module.exports);

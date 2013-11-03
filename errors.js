@@ -35,5 +35,6 @@ module.exports = {
     NotExist: makeError('NotExist Error', 'No such account'),
     NoEditor: makeError('NoEditor Error', 'No editor configured'),
     NoBrowser: makeError('NoBrowser Error', 'No browser configured'),
+    UnmatchedQuote: makeError('UnmatchedQuote Error', 'Unmatched quote'),
     UnknownLang: makeError('UnknownLang Error', 'unknown language')
 };

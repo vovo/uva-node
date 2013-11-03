@@ -107,7 +107,18 @@ function printError(e)
 
 function executeLine(line, doneFn) 
 {
-    var toks = line.trim().split(/\s+/g);
+    var toks;
+    try
+    {
+        toks = util.parseArgs(line);
+    }
+    catch (e)
+    {
+        printError(e);
+        doneFn();
+        return;
+    }
+
     var action = toks[0].toLowerCase();
 
     function checkToks(argsCount, syntax)
@@ -360,6 +371,8 @@ function executeLine(line, doneFn)
         break;
 
     case 'add':
+        // use traditional space-splitting in case password has quote chars.
+        toks = line.trim().split(/\s+/g);
         if (! checkToks(3, 'add <type> <userName> <password>')) break;
         
         var normType = Adapter.normalizeType(toks[1]);
