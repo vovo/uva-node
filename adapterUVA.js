@@ -362,8 +362,9 @@ module.exports = (function(parentCls){
         {
         case util.LANG_C: return 1; 
         case util.LANG_JAVA: return 2; 
-        case util.LANG_CPP: return 3; 
+        case util.LANG_CPP: return 3;  
         case util.LANG_PASCAL: return 4; 
+        case util.LANG_CPP11: return 5;  
         }
 
         return -1;
@@ -398,6 +399,7 @@ module.exports = (function(parentCls){
         case 2: return "Java";
         case 3: return "C++";
         case 4: return "Pascal";
+        case 5: return "C++11";
         }
 
         return "?";

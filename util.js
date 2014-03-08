@@ -9,6 +9,7 @@ const LANG_C      = 1;
 const LANG_JAVA   = 2;
 const LANG_CPP    = 3;
 const LANG_PASCAL = 4;    
+const LANG_CPP11  = 5;
 
 (function(obj){
 
@@ -16,6 +17,7 @@ obj.LANG_C = LANG_C;
 obj.LANG_JAVA = LANG_JAVA;
 obj.LANG_CPP = LANG_CPP;
 obj.LANG_PASCAL = LANG_PASCAL;
+obj.LANG_CPP11 = LANG_CPP11;
 
 /**
  * @param fileExt Lowercase file extension without the dot.
@@ -27,7 +29,7 @@ obj.getLang = function(fileExt){
     case 'c': return LANG_C; 
     case 'java': return LANG_JAVA;
     case 'cc':  
-    case 'cpp': return LANG_CPP; 
+    case 'cpp': return LANG_CPP11; 
     case 'p':
     case 'pascal':
     case 'pas': return LANG_PASCAL; 
@@ -44,6 +46,7 @@ obj.getLangName = function(lang){
     case LANG_JAVA: return 'Java';
     case LANG_CPP: return 'C++';
     case LANG_PASCAL: return 'Pascal';
+    case LANG_CPP11: return 'C++11';
     }
 
     return '?';
