@@ -388,7 +388,7 @@ module.exports = (function(parentCls){
         case 90: return Adapter.STATUS_ACCEPTED;
         }
 
-        return "?";
+        return Adapter.STATUS_UNKNOWN;
     };
 
     cls.getLang = function(id)

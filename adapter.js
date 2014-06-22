@@ -43,7 +43,7 @@ module.exports = (function(){
 
     const STATUSES = {
         STATUS_ERROR         : {label: "subm err",      color: "red"},
-        STATUS_QUEUE_ERROR   : {label: "can't queue",   color: "red"}, 
+        STATUS_QUEUE_ERROR   : {label: "can't queue",   color: "red"},
         STATUS_IN_QUEUE      : {label: "in queue",      color: "yellow"},
         STATUS_COMPILE_ERROR : {label: "compile err",   color: "yellow"},
         STATUS_RESTRICTED_FN : {label: "restricted func",   color: "yellow"},
@@ -53,7 +53,8 @@ module.exports = (function(){
         STATUS_MEM_LIMIT     : {label: "mem limit",     color: "yellow"},
         STATUS_WRONG_ANS     : {label: "wrong ans",     color: "red"},
         STATUS_PRESENTATION  : {label: "presentation",  color: "yellow"},
-        STATUS_ACCEPTED      : {label: "accepted",      color: "green"}
+        STATUS_ACCEPTED      : {label: "accepted",      color: "green"},
+        STATUS_UNKNOWN       : {label: "?",             color: "white"},
     };
 
     for (var key in STATUSES)
