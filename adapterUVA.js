@@ -204,9 +204,17 @@ module.exports = (function(parentCls){
             var tries = 0;
             function process(buf)
             {
-                var obj = JSON.parse(buf);
-                var subs = obj.subs; 
-                
+                var obj;
+                try
+                {
+                    obj = JSON.parse(buf);
+                }
+                catch(e)
+                {
+                    return callback(e);
+                }
+                var subs = obj.subs;
+
                 // latest at 0th elem.
                 subs.sort(function(a,b){return b[0] - a[0];});
 
