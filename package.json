@@ -1,7 +1,7 @@
 {
     "name": "uva-node",
     "description": "UVa Command Line Tool",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "author": "Lucas Tan",
     "homepage": "https://github.com/lucastan/uva-node",
     "bugs": "https://github.com/lucastan/uva-node/issues",
@@ -13,13 +13,16 @@
     "engines": {
         "node": ">=0.10.0"
     },
+    "scripts": {
+        "start": "node ."
+    },
     "main": "index",
     "bin": {
         "uva": "./index.js"
     },
     "readmeFilename": "README.md",
     "dependencies" :
-      { "sprintf" : ">=0.1.1"
-      , "colors" : ">=0.6.0"
+      { "sprintf" : "~0.1.1"
+      , "colors" : "~0.6.0"
       }
 }
