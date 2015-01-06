@@ -9,14 +9,14 @@ Features
 - Remembers your account info and encrypts your passwords.
 - Password-less submissions.
 - Checks most recent submission status.
-- Template Support! 
-- File name completion and problem number detection 
-- Non-interactive mode 
+- Template Support!
+- File name completion and problem number detection
+- Non-interactive mode
 - Cross-platform: Linux, Mac OS X, Windows or whatever node.js runs on
 
 One-time setup:
 <pre>
-> tpl add path/to/template.cpp 
+> tpl add path/to/template.cpp
 
 > set-editor vim
 Editor set
@@ -77,38 +77,38 @@ although it has been tested only with v0.10.0
 
 To check your node.js version, do `node --version` at the command line.
 
-Installation   
+Installation
 ============
 3 simple steps! No building required!
 
 1.  Install node.js if you haven't: http://nodejs.org
-2. `git clone https://github.com/lucastan/uva-node.git` (recommended) 
+2. `git clone https://github.com/lucastan/uva-node.git` (recommended)
     or download the source https://github.com/lucastan/uva-node/archive/master.zip
 3.  `node uva-node`
 
-Or via `npm`   
+Or via `npm`
 <pre>
 npm install -g uva-node
 uva
 </pre>
 
-The program will generate a settings file and a random key file the first 
-time it is run. Please do not modify them manually. 
+The program will generate a settings file and a random key file the first
+time it is run. Please do not modify them manually.
 
 It will use the key to encrypt all your account passwords.
-The key is stored at `~/.ssh/uva-node.key` where ~ is your home directory. 
-You don't have to generate 
+The key is stored at `~/.ssh/uva-node.key` where ~ is your home directory.
+You don't have to generate
 an SSH key nor will the program use your SSH key.
-Settings are saved in the JSON format at `~/.uva-node`. 
+Settings are saved in the JSON format at `~/.uva-node`.
 
 To upgrade to the latest version, simply do `git pull` in the uva-node dir!
 
-There is an older version (uva-cli) written in Java at uva-cli.git, 
-but only this node.js version will be actively maintained. 
+There is an older version (uva-cli) written in Java at uva-cli.git,
+but only this node.js version will be actively maintained.
 
 Usage
 =====
-UVA-NODE is an interactive shell (REPL) in which you can type commands 
+UVA-NODE is an interactive shell (REPL) in which you can type commands
 of the syntax: `<action> <arg1> <arg2> ...`
 
 Each `arg` can be surrounded by quotes if there are spaces in it.
@@ -117,7 +117,7 @@ double or single quote, but must be matching.
 
 Quotes cannot be used for the `add` action as your password might contain quotes.
 
-For your convenience, 
+For your convenience,
 the program will in many cases auto-detect the language based on the file name extension:
 
 | Ext.        | Lang |
@@ -131,24 +131,24 @@ The following are possible actions:
 
 tpl
 ---
-Syntax: 
-- tpl add {filePath} 
+Syntax:
+- tpl add {filePath}
 - tpl remove {lang}
 - tpl show
 
 All template settings are global across your accounts, but still specific to
 the OS user (computer user).
 
-tpl add {filePath}: 
+tpl add {filePath}:
 - Adds or replaces an existing template path. The program will merely store the file path,
-and will *not* copy the template file to another place. This behavior ensures the program 
+and will *not* copy the template file to another place. This behavior ensures the program
 always use the latest version of your template without having you to re-add.
 - It is recommended that filePath is absolute, instead of relative, to avoid path issues,
   and make it independent of where you launch uva-node.
 - Will detect language based on file extension.
 - The file must be in the UTF-8 or ASCII encoding. If you have no clue what it is,
-  don't worry about it. 
-- In the template file, put the string `$caret_start$` *in a line of its own* at where you want to start typing the code.   
+  don't worry about it.
+- In the template file, put the string `$caret_start$` *in a line of its own* at where you want to start typing the code.
 The entire line containing `$caret_start$` will be replaced with a blank line.
 
 Sample template file:
@@ -162,11 +162,11 @@ int main()
 }
 </pre>
 
-tpl remove {lang}: 
+tpl remove {lang}:
 - Removes the template path but will *not* delete the template file.
 - {lang} is cpp / c / java / pascal / pas / p.
 
-tpl show: 
+tpl show:
 - Shows all template settings.
 
 set-editor
@@ -204,7 +204,7 @@ add
 ----
 Syntax: add {type} {username} {password}
 
-Adds a new user account, or replace an existing one 
+Adds a new user account, or replace an existing one
 with the same type and username. The replacing behavior is useful for updating
 password.
 
@@ -228,7 +228,7 @@ The current account setting will be preserved even after you quit the program.
 
 show
 ----
-Syntax: show 
+Syntax: show
 
 Shows all user accounts
 
@@ -236,7 +236,7 @@ send
 ----
 Syntax: send {problem #} {fileName/Path} OR send {fileName/Path} OR send {problem #}
 
-Sends a code file using the current account. 
+Sends a code file using the current account.
 {fileName/Path} is relative to the current directory, which
 is where you ran the `node ...` command to start uva-node
 
@@ -275,7 +275,7 @@ For example, `set-browser open`.
 
 get-browser
 -----------
-Syntax: get-browser 
+Syntax: get-browser
 
 Prints out the browser command including args.
 
@@ -305,9 +305,7 @@ Credits
 
 License
 =======
-I have yet to decide on a license to apply to the source code.
-Meanwhile, I reserve all copyrights.
-
+MIT (See LICENSE)
 
 Please let me know if there is any problem!
 
