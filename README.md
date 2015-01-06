@@ -79,19 +79,25 @@ To check your node.js version, do `node --version` at the command line.
 
 Installation
 ============
-3 simple steps! No building required!
+Ready to run out of the box!
 
-1.  Install node.js if you haven't: http://nodejs.org
-2. `git clone https://github.com/lucastan/uva-node.git` (recommended)
-    or download the source https://github.com/lucastan/uva-node/archive/master.zip
-3.  `node uva-node`
+Install node.js and npm if you haven't: http://nodejs.org
 
-Or via `npm`
+Global installation via `npm`
+-----------------------------
 <pre>
 npm install -g uva-node
 uva
 </pre>
 
+Clone repo
+----------
+1. `git clone https://github.com/lucastan/uva-node.git` (recommended)
+    or download the source https://github.com/lucastan/uva-node/archive/master.zip
+2.  `npm install && npm start` (Windows users have to split into 2 commands)
+
+Running
+=======
 The program will generate a settings file and a random key file the first
 time it is run. Please do not modify them manually.
 
