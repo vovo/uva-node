@@ -121,6 +121,9 @@ function executeLine(line, doneFn)
         return;
     }
 
+    if (toks.length === 0)
+        return doneFn();
+
     var action = toks[0].toLowerCase();
 
     function checkToks(argsCount, syntax)
