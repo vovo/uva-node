@@ -1,6 +1,10 @@
 const fs = require('fs');
 const path = require('path');
+
+const async = require('async');
+
 const util = require('./util');
+const RequestClient = require('./requestClient');
 const Adapter = require('./adapter');
 
 const UVA_HOST = "uva.onlinejudge.org";
@@ -12,11 +16,11 @@ const UHUNT_HOST = 'uhunt.felix-halim.net';
 
 const LOGIN_FORM_PATTERN =
     // group 1: form attribs
-    // group 2: form HTML contents 
-    /<form([^>]+?id\s*=\s*["']?\w*login[^>]*)>((?:.|\n)*?)<\/form>/i;
+    // group 2: form HTML contents
+    /<form([^>]+?id\s*=\s*["']?\w*mod_loginform[^>]*)>((?:.|\n)*?)<\/form>/i;
 
 const INPUT_PATTERN =
-    // group 1: attribs 
+    // group 1: attribs
     /<input([^>]+?)\/?>/gi;
 
 module.exports = (function(parentCls){
@@ -29,112 +33,105 @@ module.exports = (function(parentCls){
         // private instance fields
         var acctData = acct.getAdapterData();
         var adapData = app.getAdapterData('uva');
-        var cookies = '';
+        var uvaClient = new RequestClient('https', UVA_HOST);
+        var uhuntClient = new RequestClient('http', UHUNT_HOST);
 
         // private instance method
         function fetchUserId(callback)
         {
-            var req;
-            acctData.userId > 0 ? 
-                callback(null, acctData.userId) : 
-                (req = util.createReq(
-                    'GET', 
-                    UHUNT_HOST, 
-                    '/api/uname2uid/'+acct.user(),
-                    util.createEndCallback(function(buf){
-                        req.removeListener('error', callback);
-                        callback(null, acctData.userId = parseInt(buf));
-                    })
-                )).on('error', callback)
-                 .end();
+            if (acctData.userId > 0)
+                return callback(null, acctData.userId);
+
+            uhuntClient.get('/api/uname2uid/' + acct.user(), function(err, res, data){
+                if (err)
+                    return callback(err);
+                acctData.userId = parseInt(data);
+                callback(null, acctData.userId);
+            });
         };
 
         function fetchProbs(callback)
         {
-            var req;
-            adapData.probs && adapData.mapNum ? 
-                callback(null, adapData.probs) :
-                (req = util.createReq(
-                    'GET',
-                    UHUNT_HOST,
-                    '/api/p',
-                    util.createEndCallback(function(buf){
-                        req.removeListener('error', callback);
-                        var p;
-                        try
-                        {
-                            p = JSON.parse(buf);
-                        }
-                        catch (e)
-                        {
-                            return callback(e);
-                        }
+            if (adapData.probs && adapData.mapNum){
+                return callback(null, adapData.probs);
+            }
 
-                        var map    = {}; // maps prob ID to array index
-                        var mapNum = {}; // maps prob # to array index
-                        for (var i=0;i < p.length; i++)
-                        {
-                            var cur = p[i];
-                            map   [cur[0].toString()] = i; // prob ID
-                            mapNum[cur[1].toString()] = i; // prob #
-                        }
+            uhuntClient.get('/api/p', function(err, res, data){
+                if (err)
+                    return callback(err);
+                var p;
+                try
+                {
+                    p = JSON.parse(data);
+                }
+                catch (e)
+                {
+                    return callback(e);
+                }
 
-                        adapData.map    = map;
-                        adapData.mapNum = mapNum; 
-                        callback(null, adapData.probs = p);
-                    })
-                )).on('error', callback)
-                 .end(); 
+                var map    = {}; // maps prob ID to array index
+                var mapNum = {}; // maps prob # to array index
+                for (var i=0;i < p.length; i++)
+                {
+                    var cur = p[i];
+                    map   [cur[0].toString()] = i; // prob ID
+                    mapNum[cur[1].toString()] = i; // prob #
+                }
+
+                adapData.map    = map;
+                adapData.mapNum = mapNum;
+                callback(null, adapData.probs = p);
+            });
         }
 
         // public instance method
         this.login = function(callback){
-            var req, req2;
-            var callback2 = util.createEndCallback(function(_, inMsg){    
-                req2.removeListener('error', callback);
-                cookies = util.getCookies(inMsg);
+            async.waterfall([
+                function(subCallback){
+                    uvaClient.get('/', subCallback);
+                },
+                function(res, html, subCallback){
+                    var f = cls.parseForm(LOGIN_FORM_PATTERN, html);
+                    var err = null;
+                    if (!f)
+                        err = ("cannot find HTML form");
+                    else if (!f.userField)
+                        err = ("cannot find user field");
+                    else if (!f.passField)
+                        err = ("cannot find pass field");
+                    else if (!f.action)
+                        err = ("cannot find action");
+
+                    if (err)
+                        return subCallback(new Error(err));
+
+                    f.data[f.userField] = acct.user();
+                    f.data[f.passField] = acct.pass();
+                    var opts = {
+                        // Must not follow otherwise will miss the session cookie.
+                        followAllRedirects: false,
+                        headers: {
+                            Referer: 'https://' + UVA_HOST,
+                        },
+                    };
+                    uvaClient.post(f.action, f.data, opts, subCallback);
+                },
+            ],
+            function(err, res, html){
+                if (err)
+                    return callback(err);
                 callback();
             });
-
-            var callback1 = util.createEndCallback(function(html, inMsg){
-                req.removeListener('error', callback);
-                var f = cls.parseForm(LOGIN_FORM_PATTERN, html);
-                var err= null;
-                if (!f)
-                    err = ("cannot find HTML form");
-                else if (!f.userField)
-                    err = ("cannot find user field");
-                else if (!f.passField)
-                    err = ("cannot find pass field");
-                else if (!f.action)
-                    err = ("cannot find action");
-
-                if (err)
-                    return callback({message: err});
-
-                var cookies = util.getCookies(inMsg);
-                f.data[f.userField] = acct.user();
-                f.data[f.passField] = acct.pass();
-
-                (req2 = util.createReq('POST', UVA_HOST, f.action, callback2))
-                    .on('error', callback)
-                    .setHeader('Cookie', cookies);
-                util.writePostData(req2, f.data);
-            });
-
-            (req = util.createReq('GET', UVA_HOST, '/', callback1))
-                .on('error', callback)
-                .end();            
         };
 
         /**
-         * Finds existing source code files which names contain the 
-         * problem number. 
+         * Finds existing source code files which names contain the
+         * problem number.
          * @return array of file names which fit the criteria; empty if not found.
          */
         this.findFileNames = function(probNum){
             var found = [];
-            var all = fs.readdirSync('.'); 
+            var all = fs.readdirSync('.');
             var probNumStr = probNum+'';
 
             for (var i=0;i < all.length; i++)
@@ -147,7 +144,7 @@ module.exports = (function(parentCls){
                 {
                     var m = cur.match(/0*(\d+)/);
                     if (m && m[1] == probNumStr)
-                        found.push(cur);        
+                        found.push(cur);
                 }
             }
 
@@ -165,39 +162,30 @@ module.exports = (function(parentCls){
         };
 
         this._send = function(probNum, filePath, fileExt, callback){
-            var req;
-            var callback10 = util.createEndCallback(function(html){
-                req.removeListener('error', callback);
-                if (html.match(/not\s+authori[zs]ed/i))
-                    callback({message: 'cannot login. password correct?'});
-                else
-                    callback();
-            });
-
             var langVal = cls.getLangVal(util.getLang(fileExt.toLowerCase()));
-            if (langVal < 0) return callback({message: 'unacceptable programming lang'});
+            if (langVal < 0)
+                return callback(new Error('unacceptable programming lang'));
 
             var data = {
                 localid: probNum,
                 code: '',
                 language: langVal,
-                codeupl: {filePath: filePath},
+                codeupl: fs.createReadStream(filePath),
                 problemid: '',
-                category: ''
+                category: '',
             };
-            
-            (req = util.createReq('POST', UVA_HOST, SUBMIT_PATH, callback10))
-                .on('error', callback)
-                .setHeader('Cookie', cookies);
-            
-            try
-            {
-                util.writeFormData(req, data);        
-            }
-            catch(e)
-            {
-                callback(typeof e ==='string' ? {message: e} : e);
-            }
+            var opts = {
+                headers: {
+                    Referer: 'https://' + UVA_HOST + SUBMIT_PATH,
+                },
+            };
+            uvaClient.postMultipart(SUBMIT_PATH, data, opts, function(err, res, html){
+                if (err)
+                    return callback(err);
+                if (html.match(/not\s+authori[zs]ed/i))
+                    return callback(new Error('cannot login. password correct?'));
+                callback(null);
+            });
         };
 
         this.fetchStatus = function(num, callback){
@@ -219,7 +207,7 @@ module.exports = (function(parentCls){
                 subs.sort(function(a,b){return b[0] - a[0];});
 
                 // must sort first then slice
-                if (subs.length > num) 
+                if (subs.length > num)
                     subs = subs.slice(0, num);
                 /*
                 subs[i] is an array with fields in this order:
@@ -253,7 +241,7 @@ module.exports = (function(parentCls){
                     cur[5] = cls.getLang(cur[5]);
                 }
 
-                if (outdated && tries++ < 1) 
+                if (outdated && tries++ < 1)
                 {
                     // retry
                     adapData.probs = null;
@@ -266,24 +254,20 @@ module.exports = (function(parentCls){
                 callback(null, subs);
             }
 
-            var callback10 = util.createEndCallback(process);
-
-            function callback05(e)
-            {
-                if (e) return callback(e);
-
-                fetchUserId(function(e2, userId){
-                    if (e2) return callback(e2);
-
-                    util.createReq(
-                        'GET', 
-                        UHUNT_HOST, 
-                        '/api/subs-user/'+userId, 
-                        callback10).on('error', callback).end();
-                });
-            }
-
-            fetchProbs(callback05);
+            async.waterfall([
+                fetchProbs,
+                function(probs, subCallback){
+                    fetchUserId(subCallback);
+                },
+                function(userId, subCallback){
+                    uhuntClient.get('/api/subs-user/' + userId, subCallback);
+                },
+            ],
+            function(err, res, data){
+                if (err)
+                    return callback(err);
+                process(data);
+            });
         };
 
         this.getProblemURL = function(probNum, callback){
@@ -340,10 +324,10 @@ module.exports = (function(parentCls){
                     break;
                 case 'value':
                     value = val;
-                    break; 
+                    break;
                 }
             }
-            
+
             if (name !== null && isText)
             {
                 var nameLower = name.toLowerCase();
@@ -354,7 +338,7 @@ module.exports = (function(parentCls){
             }
             else if (value !== null && name !== null)
             {
-                r.data[name] = value; 
+                r.data[name] = value;
             }
         }
 
@@ -365,14 +349,14 @@ module.exports = (function(parentCls){
      * @param lang One of LANG_* constants
      * @return UVA lang value or -1 if unacceptable.
      */
-    cls.getLangVal = function(lang){ 
+    cls.getLangVal = function(lang){
         switch (lang)
         {
-        case util.LANG_C: return 1; 
-        case util.LANG_JAVA: return 2; 
-        case util.LANG_CPP: return 3;  
-        case util.LANG_PASCAL: return 4; 
-        case util.LANG_CPP11: return 5;  
+        case util.LANG_C: return 1;
+        case util.LANG_JAVA: return 2;
+        case util.LANG_CPP: return 3;
+        case util.LANG_PASCAL: return 4;
+        case util.LANG_CPP11: return 5;
         }
 
         return -1;
