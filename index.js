@@ -331,9 +331,11 @@ function executeLine(line, doneFn)
             curAdap.login(function(e){
                 if (e)
                 {
-                    console.log('Login error: '+e.message);
-                    doneFn();
-                    return;
+                    if (e.message != 'cannot find HTML form') {
+                        console.log('Login error: '+e.message);
+                        doneFn();
+                        return;
+                    }
                 }
 
                 console.log('Sending code...');
